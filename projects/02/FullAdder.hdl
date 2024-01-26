@@ -1,0 +1,65 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/FullAdder.hdl
+/**
+ * Computes the sum of three bits.
+ */
+CHIP FullAdder {
+    IN a, b, c;  // 1-bit inputs
+    OUT sum,     // Right bit of a + b + c
+        carry;   // Left bit of a + b + c
+
+    PARTS:
+    //// Replace this comment with your code.
+    /* This is one way to implement it using only the truth table)
+    // calculate na,nb and nc
+    Not(in=a,out=na);
+    Not(in=b,out=nb);
+    Not(in=c,out=nc);
+
+    // calculate a and b and c
+    And(a=a,b=b,out=aAndB);
+    And(a=aAndB,b=c,out=aAndBAndC);
+
+    // calculate a and nb and nc
+    And(a=a,b=nb,out=aAndNb);
+    And(a=aAndNb,b=nc,out=aAndNbAndNc);
+
+    // calculate na and b and nc
+    And(a=na,b=b,out=naAndB);
+    And(a=naAndB,b=nc,out=naAndBAndNc);
+
+    // calculate na and nb and c
+    And(a=na,b=nb,out=naAndNb);
+    And(a=naAndNb,b=c,out=naAndNbAndC);
+
+    // calculate a and b and nc
+    And(a=aAndB,b=nc,out=aAndBAndNc);
+
+    // calculate a and nb and c
+    And(a=aAndNb,b=c,out=aAndNbAndC);
+
+    // calculate na and b and c
+    And(a=naAndB,b=c,out=naAndBAndC);
+
+   // sum = (na and nb and c) or (na and b and nc) or (a and nb and nc) or (a and b and c)
+   Or(a=aAndBAndC,b=aAndNbAndNc,out=t1);
+   Or(a=t1,b=naAndBAndNc,out=t2);
+   Or(a=t2,b=naAndNbAndC,out=sum);
+
+   // carry = (na and b and c) or (a and nb and c) or (a and b and nc) or (a and b and c)
+   Or(a=aAndBAndC,b=aAndBAndNc,out=t3);
+   Or(a=t3,b=aAndNbAndC,out=t4);
+   Or(a=t4,b=naAndBAndC,out=carry);
+   */
+   // carry is the left bit and sum is the right bit
+   // a + b
+   // if a + b overflows then cab is 1 else 0
+   // ab holds the value of a+b
+   HalfAdder(a=a,b=b,sum=ab,carry=cab);
+   // ab + c => if this overflows then rightmost bit is 0
+   HalfAdder(a=ab,b=c,sum=sum,carry=cabc);
+   // leftmost bit is set by carry flag of a+b or ab+c
+   Or(a=cab,b=cabc,out=carry);
+}

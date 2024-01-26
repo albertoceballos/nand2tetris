@@ -1,0 +1,232 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+/**
+ * The Hack Central Processing unit (CPU).
+ * Parses the binary code in the instruction input and executes it according to the
+ * Hack machine language specification. In the case of a C-instruction, computes the
+ * function specified by the instruction. If the instruction specifies to read a memory
+ * value, the inM input is expected to contain this value. If the instruction specifies
+ * to write a value to the memory, sets the outM output to this value, sets the addressM
+ * output to the target address, and asserts the writeM output (when writeM == 0, any
+ * value may appear in outM).
+ * If the reset input is 0, computes the address of the next instruction and sets the
+ * pc output to that value. If the reset input is 1, sets pc to 0.
+ * Note: The outM and writeM outputs are combinational: they are affected by the
+ * instruction's execution during the current cycle. The addressM and pc outputs are
+ * clocked: although they are affected by the instruction's execution, they commit to
+ * their new values only in the next cycle.
+ */
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to restart the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // Address of next instruction
+
+    PARTS:
+    //// Replace this comment with your code.
+
+    // instruction can be a or c instruction
+    // leftmost bit (bit[15] is the opcode 0 = A and 1 = C)
+    // A instruction stores the value of the A register and output value of A register
+
+    // for A instruction
+    // bit[0-14] are the value and bit[15] is the opcode
+
+    // for the C instruction
+    // bit[0-2] are the jump bits
+       // bit[2] = j1
+       // bit[1] = j2
+       // bit[0] = j3
+    // bit[3-5] are the destination load bits (used to determine if output of ALU will go to the A register, D register, or to writeM)
+        //bit[4] = D register
+        // bit[3] = Memory[A]
+        // bit[5] = A register
+    // bit[6-11] are the ALU control bits
+        //bit[6] = c6
+        //bit[7] = c5
+        //bit[8] = c4
+        //bit[9] = c3
+        //bit[10] = c2
+        //bit[11] = c1
+    // bit[12] are a (flag used by control bits) (1 = use M, 0 = use A)
+    // bit[13-14] are 1
+
+   // if the instruction is an A instruction then input comes from the instruction
+   // if instruction is a C instruction then input comes from the ALU
+
+    // aluout = output from alu
+    // instruction[15] = opcode -> 0= A-ins, 1 = C-ins
+    // regain = input of register A
+    // if opcode = 1 then use output from else use instruction
+
+    // if opcode = 1 and d1 = 1 then pick ALUout else pick instruction
+    Not(in=instruction[15],out=nop);
+    And(a=instruction[15],b=instruction[5],out=selins);
+
+    // pick between instruction and alu output
+    Mux16(a=instruction,b=aluout,sel=selins,out=regain);
+
+    // only load register A if we are using an A instruction (opcode = 0) or C instruction (opcode =1) and dest =A 
+    // only load A if opcode = 0 or (opcode = 1 and d1 = 1)
+    // else data passes through A but not kept in A
+    Or(a=nop,b=instruction[5],out=loada);
+
+    // load data into register A
+    ARegister(in=regain,load=loada,out=regaout,out[0..14]=addressM);
+
+    // flag to pick between A and M
+    // M is picked if opcode = 1 and a = 1
+    // A is picked if opcode = 0 or (opcode = 1 and a = 0)
+    And(a=instruction[15],b=instruction[12],out=selM);
+
+    // pick output from register A if dealing with A-instruction else use M[A]
+    Mux16(a=regaout,b=inM,sel=selM,out=aluin);
+
+    // set D register if opcode = 1 and d2 = 1
+    And(a=instruction[4],b=instruction[15],out=seldreg);
+
+    // only set D register if using C instruction and D-reg flag is true
+    DRegister(in=aluout,load=seldreg,out=regdout);
+
+    // call ALU with proper flags
+    // flags come from C instruction (c1-c6)
+    // with A instruction doesn't matter because it already loaded data to A-reg at this point
+    ALU(
+        x=regdout,
+        y=aluin,
+        zx=instruction[11],
+        nx=instruction[10],
+        zy=instruction[9],
+        ny=instruction[8],
+        f=instruction[7],
+        no=instruction[6],
+        out=aluout,
+        zr=zr,
+        ng=ng,
+        out=outM
+    );
+
+    // only write data out if we are writing to M
+    // only write to M if opcode = 1 and d3 = 1 (C-ins with M)
+    And(a=instruction[15],b=instruction[3],out=writeM);
+  
+    // regaout = output of register a
+    // if reset = 1 then inc=load=0
+    // if reset = 0 and load = 1 then inc = 0
+    // if reset = 0 and load = 0 then inc = 1
+    // no jump = pc++ -> inc=1 and reset=0 and load=0
+    // goto = PC=A -> load=1 and inc = 0 and reset=0
+    // conditional goto: if condition is true PC=A else PC++
+    // the ALU control output will be used to determine conditional goto
+    // if j3 =1 and j2 = 0 and j1 = 0 and aluout > 0 then conditional goto
+   // if j1=1 and j2=1 and j3=1 then goto
+   // <0 = bit[15] = 1
+   // =0 = bit[0..15] = 0 
+   // >0 = bit[15] =0 and at least one bit in range[0,14] is 1
+   // zr = true if aluout =0
+   // ng = true if aluout <0
+   // if zr = 0 and ng = 0 then alout > 0
+   // if zr = 0 and ng = 1 then aluout < 0
+   // if zr = 1 and ng = 0 then aluout = 0
+
+   // setup to calculate load bit
+   // this one is to make calculations easier
+   Not(in=instruction[2],out=nj1);
+   Not(in=instruction[1],out=nj2);
+   Not(in=instruction[0],out=nj3);
+   Not(in=nj1,out=j1);
+   Not(in=nj2,out=j2);
+   Not(in=nj3,out=j3);
+   Not(in=zr,out=nzr);
+   Not(in=ng,out=nng);
+
+   // j1 and j2 and j3
+   // if j1=j2=j3=1 then load=1 regardless of what zr or ng are
+   And(a=j3,b=j2,out=j3Aj2);
+   And(a=j3Aj2,b=j1,out=j3Aj2Aj1);
+
+   // not j1 and not j2 and j3 and not zr and not ng
+   And(a=nj1,b=nj2,out=nj1Anj2);
+   And(a=nj1Anj2,b=j3,out=nj1Anj2Aj3);
+   And(a=nzr,b=nng,out=nzrAnng);
+   And(a=nj1Anj2Aj3,b=nzrAnng,out=nj1Anj2Aj3AnzrAnng);
+
+   // t1 = (j1 and j2 and j3) or (not j1 and not j2 and j3 and not zr and not ng)
+   Or(a=j3Aj2Aj1,b=nj1Anj2Aj3AnzrAnng,out=t1);
+
+   // not j1 and j2 and not j3 and zr and not ng
+   And(a=nj1,b=j2,out=nj1Aj2);
+   And(a=nj1Aj2,b=nj3,out=nj1Aj2Anj3);
+   And(a=zr,b=nng,out=zrAnng);
+   And(a=nj1Aj2Anj3,b=zrAnng,out=nj1Aj2Anj3AzrAnng);
+
+   // t2 = t1 or (not j1 and j2 and not j3 and zr and not ng)
+   Or(a=t1,b=nj1Aj2Anj3AzrAnng,out=t2);
+
+   // j1 and not j2 and not j3 and not zr and ng
+   And(a=j1,b=nj2,out=j1Anj2);
+   And(a=j1Anj2,b=nj3,out=j1Anj2Anj3);
+   And(a=nzr,b=ng,out=nzrAng);
+   And(a=j1Anj2Anj3,b=nzrAng,out=j1Anj2Anj3AnzrAng);
+
+   // t3 = t2 or (j1 and not j2 and not j3 and not zr and ng)
+   Or(a=t2,b=j1Anj2Anj3AnzrAng,out=t3);
+
+   // not j1 and j2 and j3 and not zr and not ng
+   And(a=nj1Aj2,b=j3,out=nj1Aj2Aj3);
+   And(a=nj1Aj2Aj3,b=nzrAnng,out=nj1Aj2Aj3AnzrAnng);
+
+   // t4 = t3 or (not j1 and j2 and j3 and not zr and not ng)
+   Or(a=t3,b=nj1Aj2Aj3AnzrAnng,out=t4);
+
+   // not j1 and j2 and j3 and zr and not ng
+   And(a=nj1Aj2Aj3,b=zrAnng,out=nj1Aj2Aj3AzrAnng);
+
+   // t5 = t4 or (not j1 and j2 and j3 and zr and not ng)
+   Or(a=t4,b=nj1Aj2Aj3AzrAnng,out=t5);
+
+   // j1 and not j2 and j3 and not zr and not ng
+   And(a=j1Anj2,b=j3,out=j1Anj2Aj3);
+   And(a=j1Anj2Aj3,b=nzrAnng,out=j1Anj2Aj3AnzrAnng);
+
+
+   // t6 = t5 or (j1 and not j2 and j3 and not zr and not ng)
+   Or(a=t5,b=j1Anj2Aj3AnzrAnng,out=t6);
+
+   // j1 and not j2 and j3 and not zr and ng
+   And(a=j1Anj2Aj3,b=nzrAng,out=j1Anj2Aj3AnzrAng);
+
+   // t7 = t6 or (j1 and not j2 and j3 and not zr and ng)
+   Or(a=t6,b=j1Anj2Aj3AnzrAng,out=t7);
+
+   // j1 and j2 and not j3 and not zr and ng
+   And(a=j1,b=j2,out=j1Aj2);
+   And(a=j1Aj2,b=nj3,out=j1Aj2Anj3);
+   And(a=j1Aj2Anj3,b=nzrAng,out=j1Aj2Anj3AnzrAng);
+
+   // t8 = t7 or (j1 and j2 and not j3 and not zr and ng)
+   Or(a=t7,b=j1Aj2Anj3AnzrAng,out=t8);
+
+   // j1 and j2 and not j3 and zr and not ng
+   And(a=j1Aj2Anj3,b=zrAnng,out=j1Aj2Anj3AzrAnng);
+
+   // t9 = t8 or (j1 and j2 and not j3 and zr and not ng)
+   Or(a=t8,b=j1Aj2Anj3AzrAnng,out=t9);
+
+   // to handle A-ins (should incload)
+   // if A-ins then pcload = 0 else pcload = t9
+   And(a=t9,b=instruction[15],out=pcload);
+
+   // inc = not load
+   Not(in=pcload,out=incload);
+   PC(in=regaout,load=pcload,inc=incload,reset=reset,out[0..14]=pc);
+}
