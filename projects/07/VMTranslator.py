@@ -45,7 +45,7 @@ def process_line(data):
         if len(data) == 1:
             return None
         
-        if data[i] == "\n" or data[i] == " " or data[i] == "/":
+        if data[i] == "\n" or data[i] == " " or data[i] == "/" or data[i] == "\t":
             if temp == "push" or temp == "pop":
                 segment, segment_num = get_segment_and_segment_num(data,i+1)
                 return process_memory_access(
@@ -53,10 +53,75 @@ def process_line(data):
                     segment_num=segment_num,
                     is_push=(temp == "push")
                 )
-            else:
+            elif temp == "label" or temp == "goto" or temp == "if-goto":
+                return process_branching(
+                    data=data,
+                    branch_op=temp,
+                    start=i+1
+                )
+            elif temp == "eq" or temp == "neg" or temp == "not" or temp == "add" or temp == "sub" or temp == "gt" or temp == "lt" or temp == "and" or temp == "or":
                 return process_arithmetic(temp)
         else:
             temp += data[i]
+
+
+"""
+Purpose:
+    process branching operations (goto, if-goto, label)
+
+Arguments:
+    data:
+        string that contains label name
+
+    branch_op:
+        string that can be "goto", "if-goto" or "label" and used to determine branch operation
+
+    start:
+        index used to extract label name
+
+Return:
+    string that contains HACK assembly encoded instruction
+"""
+def process_branching(data,branch_op,start):
+    # label name
+    label_name = ""
+    # iterate over string
+    for i in range(start,len(data)):
+        # when you reach the space you find the label name
+        if data[i] == " " or data[i] == "\n" or data[i] == "/":
+            break
+        else:
+            label_name += data[i]
+
+    ins = ""
+
+    if branch_op == "label":
+        ins += f"//label {label_name}\n"
+        ins += f"({label_name})\n"
+    elif branch_op == "goto":
+        ins += f"//goto @{label_name}\n"
+        ins += f"@{label_name}\n"
+        ins += "0;JMP\n"
+    else:
+        ins += f"// if-goto @{label_name}\n"
+        # if label is if-goto NAME
+        # then cond = pop()
+        # if cond is True then jump
+        # pop the stack
+        ins += "@SP\n"
+        ins += "M=M-1\n"
+        ins += "@SP\n"
+        ins += "A=M\n"
+        # store popped value in D
+        ins += "D=M\n"
+        # goto label_name if D is True
+        ins += f"@{label_name}\n"
+        ins += "D;JGT\n"
+
+    return ins
+
+
+        
 
 """
 Purpose:
