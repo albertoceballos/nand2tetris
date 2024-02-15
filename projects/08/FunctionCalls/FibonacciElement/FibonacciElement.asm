@@ -4,8 +4,8 @@ D = A
 @SP
 M = D
 // process function call Sys.init with args 0
-// push return address label Sys.init_0
-@Sys.init_0
+// push return address label Sys.init_ret_0
+@Sys.init_ret_0
 D=A
 @SP
 A=M
@@ -14,7 +14,7 @@ M=D
 M=M+1
 //push LCL
 @LCL
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -22,7 +22,7 @@ M=D
 M=M+1
 // push ARG
 @ARG
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -30,7 +30,7 @@ M=D
 M=M+1
 // push THIS
 @THIS
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -38,7 +38,7 @@ M=D
 M=M+1
 // push THAT
 @THAT
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -61,7 +61,7 @@ M=D
 // goto Sys.init
 @Sys.init
 0;JMP
-(Sys.init_0)
+(Sys.init_ret_0)
 
 // function declaration Main.fibonacci with 0
 (Main.fibonacci)
@@ -71,12 +71,8 @@ M=D
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -96,35 +92,23 @@ M=D
 @SP
 M=M+1
 
-//lt
+// process lt
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D-M
-@L0
-D;JGT
-@1
-D=A
-@L1
-0;JMP
-(L0)
-@0
-D=A
-(L1)
+D=M-D
+@LESS_THAN_1
+D;JLT
+D=0
+@END_1
+0;JEQ
+(LESS_THAN_1)
+D=-1
+(END_1)
 @SP
 A=M
 M=D
@@ -134,16 +118,13 @@ M=M+1
 // if-goto @Main.fibonacci$N_LT_2
 @SP
 M=M-1
-@SP
 A=M
 D=M
 @Main.fibonacci$N_LT_2
-A=M
-D;JGT
+D;JNE
 
 //goto @Main.fibonacci$N_GE_2
 @Main.fibonacci$N_GE_2
-A=M
 0;JMP
 
 //label Main.fibonacci$N_LT_2
@@ -154,12 +135,8 @@ A=M
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -173,57 +150,57 @@ M=M+1
 D=M
 @end_frame
 M=D
-@end_frame
-D = M
 @5
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @ret_address
-M = D
+M=D
 @SP
-M = M - 1
-A = M
-D = M
+M=M-1
+A=M
+D=M
 @ARG
-A = M
-M = D
+A=M
+M=D
 @ARG
-D = M + 1
+D=M+1
 @SP
-M = D
+M=D
 @end_frame
-D = M - 1
-A = D
-D = M
+D=M
+@1
+D=D-A
+A=D
+D=M
 @THAT
-M = D
+M=D
 @end_frame
-D = M
+D=M
 @2
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @THIS
-M = D
+M=D
 @end_frame
-D = M
+D=M
 @3
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @ARG
-M = D
+M=D
 @end_frame
-D = M
+D=M
 @4
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @LCL
-M = D
+M=D
 @ret_address
-A = M
+A=M
 0;JMP
 
 //label Main.fibonacci$N_GE_2
@@ -234,12 +211,8 @@ A = M
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -259,34 +232,21 @@ M=D
 @SP
 M=M+1
 
-//sub
+// sub
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D-M
-@SP
-A=M
-M=D
+M=M-D
 @SP
 M=M+1
 
 // process function call Main.fibonacci with args 1
-// push return address label Main.fibonacci_1
-@Main.fibonacci_1
+// push return address label Main.fibonacci_ret_2
+@Main.fibonacci_ret_2
 D=A
 @SP
 A=M
@@ -295,7 +255,7 @@ M=D
 M=M+1
 //push LCL
 @LCL
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -303,7 +263,7 @@ M=D
 M=M+1
 // push ARG
 @ARG
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -311,7 +271,7 @@ M=D
 M=M+1
 // push THIS
 @THIS
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -319,7 +279,7 @@ M=D
 M=M+1
 // push THAT
 @THAT
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -342,19 +302,15 @@ M=D
 // goto Main.fibonacci
 @Main.fibonacci
 0;JMP
-(Main.fibonacci_1)
+(Main.fibonacci_ret_2)
 
 // push argument 0
 // addr = segment_pointer + segment_num
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -374,34 +330,21 @@ M=D
 @SP
 M=M+1
 
-//sub
+// sub
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D-M
-@SP
-A=M
-M=D
+M=M-D
 @SP
 M=M+1
 
 // process function call Main.fibonacci with args 1
-// push return address label Main.fibonacci_2
-@Main.fibonacci_2
+// push return address label Main.fibonacci_ret_3
+@Main.fibonacci_ret_3
 D=A
 @SP
 A=M
@@ -410,7 +353,7 @@ M=D
 M=M+1
 //push LCL
 @LCL
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -418,7 +361,7 @@ M=D
 M=M+1
 // push ARG
 @ARG
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -426,7 +369,7 @@ M=D
 M=M+1
 // push THIS
 @THIS
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -434,7 +377,7 @@ M=D
 M=M+1
 // push THAT
 @THAT
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -457,30 +400,17 @@ M=D
 // goto Main.fibonacci
 @Main.fibonacci
 0;JMP
-(Main.fibonacci_2)
+(Main.fibonacci_ret_3)
 
-//add
+// add
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D+M
-@SP
-A=M
-M=D
+M=D+M
 @SP
 M=M+1
 
@@ -489,57 +419,57 @@ M=M+1
 D=M
 @end_frame
 M=D
-@end_frame
-D = M
 @5
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @ret_address
-M = D
+M=D
 @SP
-M = M - 1
-A = M
-D = M
+M=M-1
+A=M
+D=M
 @ARG
-A = M
-M = D
+A=M
+M=D
 @ARG
-D = M + 1
+D=M+1
 @SP
-M = D
+M=D
 @end_frame
-D = M - 1
-A = D
-D = M
+D=M
+@1
+D=D-A
+A=D
+D=M
 @THAT
-M = D
+M=D
 @end_frame
-D = M
+D=M
 @2
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @THIS
-M = D
+M=D
 @end_frame
-D = M
+D=M
 @3
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @ARG
-M = D
+M=D
 @end_frame
-D = M
+D=M
 @4
-D = D - A
-A = D
-D = M
+D=D-A
+A=D
+D=M
 @LCL
-M = D
+M=D
 @ret_address
-A = M
+A=M
 0;JMP
 
 // function declaration Sys.init with 0
@@ -557,8 +487,8 @@ M=D
 M=M+1
 
 // process function call Main.fibonacci with args 1
-// push return address label Main.fibonacci_3
-@Main.fibonacci_3
+// push return address label Main.fibonacci_ret_4
+@Main.fibonacci_ret_4
 D=A
 @SP
 A=M
@@ -567,7 +497,7 @@ M=D
 M=M+1
 //push LCL
 @LCL
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -575,7 +505,7 @@ M=D
 M=M+1
 // push ARG
 @ARG
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -583,7 +513,7 @@ M=D
 M=M+1
 // push THIS
 @THIS
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -591,7 +521,7 @@ M=D
 M=M+1
 // push THAT
 @THAT
-D=A
+D=M
 @SP
 A=M
 M=D
@@ -614,13 +544,12 @@ M=D
 // goto Main.fibonacci
 @Main.fibonacci
 0;JMP
-(Main.fibonacci_3)
+(Main.fibonacci_ret_4)
 
-//label Sys.init$END
-(Sys.init$END)
+//label Main.fibonacci$END
+(Main.fibonacci$END)
 
-//goto @Sys.init$END
-@Sys.init$END
-A=M
+//goto @Main.fibonacci$END
+@Main.fibonacci$END
 0;JMP
 
