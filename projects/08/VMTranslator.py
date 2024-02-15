@@ -1041,7 +1041,7 @@ def process_pop(segment,segment_num):
         ins += f"@{segment_num}\n"
         ins += "D=A\n"
         ins += f"@{segment}\n"
-        ins += "D=D+M"
+        ins += "D=D+M\n"
         ins += "@addr\n"
         ins += "M=D\n"
         # SP--

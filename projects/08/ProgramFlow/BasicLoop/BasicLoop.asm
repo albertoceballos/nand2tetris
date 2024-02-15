@@ -21,7 +21,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
@@ -36,12 +35,8 @@ M=D
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -55,12 +50,8 @@ M=M+1
 @0
 D=A
 @LCL
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -69,28 +60,15 @@ M=D
 @SP
 M=M+1
 
-//add
+// add
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D+M
-@SP
-A=M
-M=D
+M=D+M
 @SP
 M=M+1
 
@@ -106,7 +84,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
@@ -118,12 +95,8 @@ M=D
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -143,28 +116,15 @@ M=D
 @SP
 M=M+1
 
-//sub
+// sub
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D-M
-@SP
-A=M
-M=D
+M=M-D
 @SP
 M=M+1
 
@@ -180,7 +140,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
@@ -192,12 +151,8 @@ M=D
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -209,23 +164,18 @@ M=M+1
 // if-goto @LOOP
 @SP
 M=M-1
-@SP
 A=M
 D=M
 @LOOP
-D;JGT
+D;JNE
 
 // push local 0
 // addr = segment_pointer + segment_num
 @0
 D=A
 @LCL
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M

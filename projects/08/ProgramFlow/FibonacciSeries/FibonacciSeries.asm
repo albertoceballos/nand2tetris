@@ -3,12 +3,8 @@
 @1
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -22,7 +18,6 @@ M=M+1
 @SP
 M=M-1
 // this/that = *sp
-@SP
 A=M
 D=M
 @THAT
@@ -51,7 +46,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
@@ -81,7 +75,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
@@ -93,12 +86,8 @@ M=D
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -118,28 +107,15 @@ M=D
 @SP
 M=M+1
 
-//sub
+// sub
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D-M
-@SP
-A=M
-M=D
+M=M-D
 @SP
 M=M+1
 
@@ -155,7 +131,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
@@ -170,12 +145,8 @@ M=D
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -187,11 +158,10 @@ M=M+1
 // if-goto @COMPUTE_ELEMENT
 @SP
 M=M-1
-@SP
 A=M
 D=M
 @COMPUTE_ELEMENT
-D;JGT
+D;JNE
 
 //goto @END
 @END
@@ -205,12 +175,8 @@ D;JGT
 @0
 D=A
 @THAT
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -224,12 +190,8 @@ M=M+1
 @1
 D=A
 @THAT
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -238,28 +200,15 @@ M=D
 @SP
 M=M+1
 
-//add
+// add
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D+M
-@SP
-A=M
-M=D
+M=D+M
 @SP
 M=M+1
 
@@ -275,7 +224,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
@@ -304,28 +252,15 @@ M=D
 @SP
 M=M+1
 
-//add
+// add
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D+M
-@SP
-A=M
-M=D
+M=D+M
 @SP
 M=M+1
 
@@ -334,7 +269,6 @@ M=M+1
 @SP
 M=M-1
 // this/that = *sp
-@SP
 A=M
 D=M
 @THAT
@@ -345,12 +279,8 @@ M=D
 @0
 D=A
 @ARG
-D=D+M
-@addr
-M=D
+A=D+M
 // *sp = *addr
-@addr
-A=M
 D=M
 @SP
 A=M
@@ -370,28 +300,15 @@ M=D
 @SP
 M=M+1
 
-//sub
+// sub
 @SP
 M=M-1
-@SP
 A=M
 D=M
-@a
-M=D
 @SP
 M=M-1
-@SP
 A=M
-D=M
-@b
-M=D
-@b
-D=M
-@a
-D=D-M
-@SP
-A=M
-M=D
+M=M-D
 @SP
 M=M+1
 
@@ -407,7 +324,6 @@ M=D
 @SP
 M=M-1
 // *addr = *sp
-@SP
 A=M
 D=M
 @addr
