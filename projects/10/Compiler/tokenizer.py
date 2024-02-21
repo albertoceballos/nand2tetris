@@ -207,6 +207,14 @@ Return:
 """
 def write_token(token, tag,output_file):
     with open(output_file,"a+") as f1:
+        if token == "<":
+            token = "&lt;"
+        elif token == ">":
+            token = "&gt;"
+        elif token == "\"":
+            token = "&quot;"
+        elif token == "&":
+            token = "&amp;"
         f1.write(f"<{tag}> {token} </{tag}>\n")
 
 """
@@ -342,13 +350,12 @@ if os.path.isdir(filename):
     # get directory name
     dir_name = sys.argv[1]
 
-    # get output file name
-    output_file_name = f"{dir_name}/{dir_name.split('/')[-1]}T.xml"
-
     # iterate over files
     for file in os.listdir(dir_name):
         # get file
         if file.endswith(".jack"):
+            output_file_name = file.split('/')[-1].split('.')[0]
+            output_file_name = f"{output_file_name}T1.xml"
             input_file = f"{filename}/{file}"
             process_file(
                 input_file=input_file,
