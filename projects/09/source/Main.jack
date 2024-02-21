@@ -1,0 +1,153 @@
+class Main
+{
+    /*
+        multiline commment
+        this is 
+        ignored
+    ****/
+    // show menu
+    function void show_menu()
+    {
+        do Output.printString("Select operation:");
+        // 128 = new line character
+        // print new line
+        do Output.printChar(128);
+        do Output.printString("1. Add");
+        do Output.printChar(128);
+        do Output.printString("2. Subtract");
+        do Output.printChar(128);
+        do Output.printString("3. Multiply");
+        do Output.printChar(128);
+        do Output.printString("4. Divide");
+        do Output.printChar(128);
+        do Output.printString("5. Exit");
+        do Output.printChar(128);
+        return;
+    }
+
+    // get and validate menu option
+    function int get_menu_option()
+    {
+        var int selection;
+        var boolean loop;
+        let selection = -1;
+        let loop = true;
+        while(loop)
+        {
+            // show menu and get option from user
+            do Main.show_menu();
+            let selection = Keyboard.readInt("Enter selection: ");
+            do Output.printChar(128);
+
+            // check if option is valid
+            if(selection > 0)
+            {
+                if(selection < 6)
+                {
+                    let loop = false;
+                }
+                else
+                {
+                    do Output.printString("Wrong selection. Try Again.");
+                    do Output.printChar(128);
+                }
+            }
+            else
+            {
+                do Output.printString("Wrong selection. Try Again.");
+                do Output.printChar(128);
+            }
+        }
+
+        return selection;
+    }
+
+    // calculate operation and show error for division by 0
+    function void calculate_operation(int a,int b,int op)
+    {
+        var int result;
+        // check if sum
+        if(op = 1)
+        {
+            let result = a + b;
+            do Output.printString("Result: ");
+            do Output.printInt(result);
+            do Output.printChar(128);
+        }
+        // check if subtract
+        if(op = 2)
+        {
+            let result = a - b;
+            do Output.printString("Result: ");
+            do Output.printInt(result);
+            do Output.printChar(128);
+        }
+        // check if multiply
+        if(op = 3)
+        {
+            let result = a * b;
+            do Output.printString("Result: ");
+            do Output.printInt(result);
+            do Output.printChar(128);
+        }
+        // check if division
+        if(op = 4)
+        {
+            // check division by 0
+            if(b = 0)
+            {
+                do Output.printString("Cannot divide by 0");
+                do Output.printChar(128);
+            }
+            else
+            {
+                let result = a / b;
+                do Output.printString("Result: ");
+                do Output.printInt(result);
+                do Output.printChar(128);
+            }
+        }
+        return;
+    }
+
+    // get user input and calculate operation
+    function void get_data()
+    {
+        var boolean loop;
+        var int a, b, op;
+        let loop = true;
+        
+        while(loop) 
+        {
+            // get first  number
+            let a = Keyboard.readInt("Enter a: ");
+            do Output.printChar(128);
+
+            // get second number
+            let b = Keyboard.readInt("Enter b: ");
+            do Output.printChar(128);
+
+            // get menu option
+            let op = Main.get_menu_option();
+
+            // check if exit
+            if(op = 5)
+            {
+                let loop = false;
+            }
+            else
+            {
+                // calculate operation
+                do Main.calculate_operation(a,b,op);
+            }
+        }
+
+        return;
+    }
+
+    function void main()
+    {
+        do Main.get_data();
+        return;
+    }
+}

@@ -1,0 +1,1 @@
+class Main{function void main(){var string a; let a = "ab\a";return;}}
