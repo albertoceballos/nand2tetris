@@ -1,184 +1,58 @@
+"""
+This module will receive a JACK source code file and split it into tokens
+The tokens will be stored in a file with the same filename as the source code but with xml extension
+"""
 import sys
 import string
 import os
 
-# get cmd args
-n = len(sys.argv)
+def write_tag(
+    tag : str,
+    output_file : str,
+    closed : bool
+) -> None:
+    """
+    Purpose:
+        write opening and closing tag for set of statements
 
-# missing filename
-if n < 2:
-    raise Exception("Missing arguments. pass filename")
+    Arguments:
+        tag:
+            tag to write
 
-# too many args
-if n > 2:
-    raise Exception("Too many arguments")
+        output_file:
+            output file
 
-# Finite State Automata
-# described by picture "finite_state_automata_tokenizer" in folder
-# uses ASCII values for characters
-# LR, RF = \n
-# in image:
-#   L = {a-zA-Z}
-#   D = {0-9}
-#   S = {set of symbols}
-fsa = {
-    "start":{
-        47: "symbol47", # /
-        13: "start", # [LR]
-        10: "start", # [RF]
-        32: "start", # [space]
-        34: "string", # "
-        "else": "start",
-    },
-    # / state
-    # handled differently due to comments
-    "symbol47": {
-        47: "slc", # /
-        42: "smc", # *
-        "else": "done"
-    },
-    # start line comment
-    "slc": {
-        10: "done", # LF
-        13: "done", # CR
-        "else": "slc"
-    },
-    # start multline comment
-    "smc": {
-        42: "mmc",
-        "else": "smc"
-    },
-    # middle multiline comment
-    "mmc": {
-        47: "done",
-        "else": "smc"
-    },
-    # identifier state
-    "id": {
-        "else": "done"
-    },
-    # integer state
-    "int" : {
-        "else": "done"
-    },
-    # string state
-    "string": {
-        "else": "string",
-        34: "done", # "
-        92: "escape" # \
-    },
-    # escape state
-    "escape": {
-        "else": "string"
-    }
-}
+        closed:
+            flag to determine if write closed tag or open tag
 
-# create set of valid characters (a-z,A-Z,_)
-valid_chars = set(string.ascii_letters).union(set({'_'}))
-
-# set of symbols
-symbols = set({
-    '{','}','(',')','[',']','.',
-    ',',';','+','-','*','/','&',
-    '|','<','>','=','~'
-})
-
-# convert symbols in symbol set to symbol(symbol ascii code)
-symbols_name = set()
-
-# set of keywords
-keyword_set = set({
-    'class',
-    'constructor',
-    'function',
-    'method',
-    'field',
-    'static',
-    'var',
-    'int',
-    'char',
-    'boolean',
-    'void',
-    'true',
-    'false',
-    'null',
-    'this',
-    'let',
-    'do',
-    'if',
-    'else',
-    'while',
-    'return'
-})
-
-# map transition from start state to identifier state via a-z,A-Z,_
-# also map transition from identifier to identifier state via a-z,A-Z,_
-for v in valid_chars:
-    fsa["start"][ord(v)] = "id"
-    fsa["id"][ord(v)] = "id"
-
-# map identifier to identifier via 0-9
-# also map start to int via 0-9
-# also map int to int via 0-9
-for v in range(0,10):
-    fsa["id"][ord(str(v))] = "id"
-    fsa["start"][ord(str(v))] = "int"
-    fsa["int"][ord(str(v))] = "int"
-
-for v in symbols:
-    # avoid /
-    if ord(v) not in fsa["start"].keys():
-        # map start to symbol in format symbol(symbol ascii code) via symbol ascii code
-        fsa["start"][ord(v)] = f"symbol{ord(v)}"
-
-    # create symbol(symbol ascii code) entry and map it to done via all characters
-    if f"symbol{ord(v)}" not in fsa.keys():
-        fsa[f"symbol{ord(v)}"] = {
-            "else": "done"
-        }
-
-    # create set of symbol (symbol ascii code) used for terminal state determination
-    symbols_name.add(f"symbol{ord(v)}")
-
-"""
-Purpose:
-    write opening and closing tag for set of statements
-
-Arguments:
-    tag:
-        tag to write
-
-    output_file:
-        output file
-
-    closed:
-        flag to determine if write closed tag or open tag
-
-Return:
-    None
-"""
-def write_tag(tag,output_file,closed):
-    with open(output_file,"a+") as f3:
+    Return:
+        None
+    """
+    with open(output_file,"a+",encoding="utf-8") as f3:
         if closed is True:
             f3.write(f"</{tag}>\n")
         else:
             f3.write(f"<{tag}>\n")
 
-"""
-Purpose:
-    navigate to next state in FSA using input "c" which is current character
+def process_input(
+    c : str,
+    current_state : str,
+    fsa : dict[str,dict[str,str]]
+) -> str:
+    """
+    Purpose:
+        navigate to next state in FSA using input "c" which is current character
 
-Arguments:
-    c:
-        character to input into FSA
+    Arguments:
+        c:
+            character to input into FSA (str)
 
-    current_state:
-        current state of FSA
+        current_state:
+            current state of FSA (str)
 
-Return:
-    new state
-"""
-def process_input(c,current_state):
+    Return:
+        new state: str
+    """
     # check if input "c" exists as transition in current state of FSA
     if c in fsa[current_state].keys():
         # if it does then transition to it
@@ -188,25 +62,29 @@ def process_input(c,current_state):
         current_state = fsa[current_state]["else"]
     return current_state
 
-"""
-Purpose:
-    Write token to file in XML format
+def write_token(
+    token : str,
+    tag : str,
+    output_file : str
+):
+    """
+    Purpose:
+        Write token to file in XML format
 
-Arguments:
-    token:
-        token to write
+    Arguments:
+        token:
+            token to write : str
 
-    tag:
-        tag to write
+        tag:
+            tag to write : str
 
-    output_file:
-        output file path
+        output_file:
+            output file path : str
 
-Return:
-    None
-"""
-def write_token(token, tag,output_file):
-    with open(output_file,"a+") as f1:
+    Return:
+        None
+    """
+    with open(output_file,"a+",encoding="utf-8") as f1:
         if token == "<":
             token = "&lt;"
         elif token == ">":
@@ -217,21 +95,32 @@ def write_token(token, tag,output_file):
             token = "&amp;"
         f1.write(f"<{tag}> {token} </{tag}>\n")
 
-"""
-Purpose:
-    Process file
+def process_file(
+    input_file : str,
+    output_file : str,
+    keyword_set : set[str],
+    symbols_name : set[str],
+    fsa : dict[str,dict[str,str]]
+) -> None:
+    """
+    Purpose:
+        Process file
 
-Arguments:
-    input_file:
-        input file path
+    Arguments:
+        input_file:
+            input file path
 
-    output_file:
-        output file path
+        output_file:
+            output file path
 
-Return:
-    None
-"""
-def process_file(input_file,output_file):
+        keyword_set:
+            set of keywords (string)
+
+        symbols_name:
+            set of symbols (string)
+    Return:
+        None
+    """
     # current state flag
     current_state = "start"
     # identifier name (used to determine variable names, keywords, symbols)
@@ -243,7 +132,7 @@ def process_file(input_file,output_file):
         closed=False
     )
     # add \n to input_file to bypass last token issue at EOF
-    with open(input_file,"a+") as f:
+    with open(input_file,"a+",encoding="utf-8") as f:
         f.write("\n")
 
     # read file in binary to be able to seek previous character
@@ -259,7 +148,11 @@ def process_file(input_file,output_file):
 
             # convert character to ascii and pass it as input
             # get next state
-            next_state = process_input(ord(c),current_state)
+            next_state = process_input(
+                c=ord(c),
+                current_state=current_state,
+                fsa=fsa
+            )
 
             # done = terminal state it is not a real state but rather a logical state
             if next_state == "done":
@@ -342,33 +235,218 @@ def process_file(input_file,output_file):
             closed=True
         )
 
-# get filename
-filename = sys.argv[1]
+def generate_fsa(
+    symbols : set[str]
+) -> dict[str,dict[int,str]]:
+    """
+    Purpose:
+        Generate Finite State Automata for tokenizer
 
-# check if directory
-if os.path.isdir(filename):
-    # get directory name
-    dir_name = sys.argv[1]
+    Arguments:
+        symbols:
+            set of strings (symbols) used by language
 
-    # iterate over files
-    for file in os.listdir(dir_name):
-        # get file
-        if file.endswith(".jack"):
-            output_file_name = file.split('/')[-1].split('.')[0]
-            output_file_name = f"{output_file_name}T1.xml"
-            input_file = f"{filename}/{file}"
-            process_file(
-                input_file=input_file,
-                output_file=output_file_name
-            )
-else:
-    # get single filename
-    input_file = sys.argv[1]
-    # get filename without extension
-    filename = input_file.split('/')[-1].split('.')[0]
-    # output file name
-    output_file_name = f"{filename}T.xml"
-    process_file(
-        input_file=input_file,
-        output_file=output_file_name
-    )
+    Return:
+        FSA which is a dictionary of form:
+        {
+            state:
+            {
+                transition: state,
+                else: state
+            }
+        }
+        The else state is used as catch all for any
+        transitions not caught by the other transitions
+    """
+    # Finite State Automata
+    # described by picture "finite_state_automata_tokenizer" in folder
+    # uses ASCII values for characters
+    # LR, RF = \n
+    # in image:
+    #   L = {a-zA-Z}
+    #   D = {0-9}
+    #   S = {set of symbols}
+    fsa = {
+        "start":{
+            47: "symbol47", # /
+            13: "start", # [LR]
+            10: "start", # [RF]
+            32: "start", # [space]
+            34: "string", # "
+            "else": "start",
+        },
+        # / state
+        # handled differently due to comments
+        "symbol47": {
+            47: "slc", # /
+            42: "smc", # *
+            "else": "done"
+        },
+        # start line comment
+        "slc": {
+            10: "done", # LF
+            13: "done", # CR
+            "else": "slc"
+        },
+        # start multline comment
+        "smc": {
+            42: "mmc",
+            "else": "smc"
+        },
+        # middle multiline comment
+        "mmc": {
+            47: "done",
+            "else": "smc"
+        },
+        # identifier state
+        "id": {
+            "else": "done"
+        },
+        # integer state
+        "int" : {
+            "else": "done"
+        },
+        # string state
+        "string": {
+            "else": "string",
+            34: "done", # "
+            92: "escape" # \
+        },
+        # escape state
+        "escape": {
+            "else": "string"
+        }
+    }
+
+    # create set of valid characters (a-z,A-Z,_)
+    valid_chars = set(string.ascii_letters).union(set({'_'}))
+
+    # map transition from start state to identifier state via a-z,A-Z,_
+    # also map transition from identifier to identifier state via a-z,A-Z,_
+    for v in valid_chars:
+        fsa["start"][ord(v)] = "id"
+        fsa["id"][ord(v)] = "id"
+
+    # map identifier to identifier via 0-9
+    # also map start to int via 0-9
+    # also map int to int via 0-9
+    for v in range(0,10):
+        fsa["id"][ord(str(v))] = "id"
+        fsa["start"][ord(str(v))] = "int"
+        fsa["int"][ord(str(v))] = "int"
+
+    for v in symbols:
+        # avoid /
+        if ord(v) not in fsa["start"].keys():
+            # map start to symbol in format symbol(symbol ascii code) via symbol ascii code
+            fsa["start"][ord(v)] = f"symbol{ord(v)}"
+
+        # create symbol(symbol ascii code) entry and map it to done via all characters
+        if f"symbol{ord(v)}" not in fsa.keys():
+            fsa[f"symbol{ord(v)}"] = {
+                "else": "done"
+            }
+
+    return fsa
+
+def main():
+    """
+    Purpose:
+        Entry point of program
+
+    Arguments:
+        None
+
+    Return:
+        None
+    """
+    # get cmd args
+    n = len(sys.argv)
+
+    try:
+        assert n == 2
+    except AssertionError:
+        print("Error: Missing arguments")
+        print("Program should be run: ")
+        print("<program name> <source code>")
+        sys.exit()
+    # get filename
+    filename = sys.argv[1]
+
+    # set of symbols
+    symbols = set({
+        '{','}','(',')','[',']','.',
+        ',',';','+','-','*','/','&',
+        '|','<','>','=','~'
+    })
+
+    # convert symbols in symbol set to symbol(symbol ascii code)
+    symbols_name = set()
+
+    for v in symbols:
+        # create set of symbol (symbol ascii code) used for terminal state determination
+        symbols_name.add(f"symbol{ord(v)}")
+
+    # set of keywords
+    keyword_set = set({
+        'class',
+        'constructor',
+        'function',
+        'method',
+        'field',
+        'static',
+        'var',
+        'int',
+        'char',
+        'boolean',
+        'void',
+        'true',
+        'false',
+        'null',
+        'this',
+        'let',
+        'do',
+        'if',
+        'else',
+        'while',
+        'return'
+    })
+
+    fsa = generate_fsa(symbols=symbols)
+
+    # check if directory
+    if os.path.isdir(filename):
+        # get directory name
+        dir_name = sys.argv[1]
+
+        # iterate over files
+        for file in os.listdir(dir_name):
+            # get file
+            if file.endswith(".jack"):
+                output_file_name = file.split('/')[-1].split('.')[0]
+                output_file_name = f"{output_file_name}T1.xml"
+                input_file = f"{filename}/{file}"
+                process_file(
+                    input_file=input_file,
+                    output_file=output_file_name,
+                    keyword_set=keyword_set,
+                    symbols_name=symbols_name,
+                    fsa=fsa
+                )
+    else:
+        # get single filename
+        input_file = sys.argv[1]
+        # get filename without extension
+        filename = input_file.split('/')[-1].split('.')[0]
+        # output file name
+        output_file_name = f"{filename}T.xml"
+        process_file(
+            input_file=input_file,
+            output_file=output_file_name,
+            keyword_set=keyword_set,
+            symbols_name=symbols_name,
+            fsa=fsa
+        )
+
+if __name__ == "__main__":
+    main()
