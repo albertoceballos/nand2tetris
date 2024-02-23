@@ -273,7 +273,7 @@ def generate_fsa(
             10: "start", # [RF]
             32: "start", # [space]
             34: "string", # "
-            "else": "start",
+            "else": "error",
         },
         # / state
         # handled differently due to comments
@@ -300,11 +300,41 @@ def generate_fsa(
         },
         # identifier state
         "id": {
-            "else": "done"
+            "else": "error",
+            "{": "done",
+            "(": "done",
+            ",": "done",
+            ";": "done",
+            "[": "done",
+            "=" : "done",
+            ".": "done",
+            "+": "done",
+            "-": "done",
+            "*": "done",
+            "/": "done",
+            "&": "done",
+            "|": "done",
+            "<": "done",
+            ">": "done",
+            "]": "done",
+            ")": "done"
         },
         # integer state
         "int" : {
-            "else": "done"
+            "+": "done",
+            "-": "done",
+            "*": "done",
+            "/": "done",
+            "&": "done",
+            "|": "done",
+            ">": "done",
+            "<": "done",
+            "=": "done",
+            "]": "done",
+            ";": "done",
+            ")": "done",
+            ",": "done",
+            "else": "error"
         },
         # string state
         "string": {
@@ -339,13 +369,7 @@ def generate_fsa(
         # avoid /
         if ord(v) not in fsa["start"].keys():
             # map start to symbol in format symbol(symbol ascii code) via symbol ascii code
-            fsa["start"][ord(v)] = f"symbol{ord(v)}"
-
-        # create symbol(symbol ascii code) entry and map it to done via all characters
-        if f"symbol{ord(v)}" not in fsa.keys():
-            fsa[f"symbol{ord(v)}"] = {
-                "else": "done"
-            }
+            fsa["start"][ord(v)] = "done"
 
     return fsa
 
