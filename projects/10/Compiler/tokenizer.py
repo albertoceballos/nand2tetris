@@ -95,11 +95,42 @@ def write_token(
             token = "&amp;"
         f1.write(f"<{tag}> {token} </{tag}>\n")
 
+def handle_error(
+    state : str,
+    character : str,
+    line_num : int,
+    input_file : str
+) -> None:
+    """
+    Purpose:
+        Raise errors and exit gracefully
+
+    Arguments:
+        state:
+            string that has last valid state
+
+        character:
+            character that raised the error
+
+        line_num:
+            line number
+
+        input_file:
+            file that caused the error
+    Return:
+        None
+    """
+    print(f"Error at line {line_num}: ")
+    print(f"Invalid character {ord(character)}")
+    print(f"final state: {state}")
+    print(f"input file: {input_file}")
+    sys.exit()
+
 def process_file(
     input_file : str,
     output_file : str,
     keyword_set : set[str],
-    symbols_name : set[str],
+    symbols : set[str],
     fsa : dict[str,dict[str,str]]
 ) -> None:
     """
@@ -116,7 +147,7 @@ def process_file(
         keyword_set:
             set of keywords (string)
 
-        symbols_name:
+        symbols:
             set of symbols (string)
     Return:
         None
@@ -135,6 +166,8 @@ def process_file(
     with open(input_file,"a+",encoding="utf-8") as f:
         f.write("\n")
 
+    line_num = 0
+
     # read file in binary to be able to seek previous character
     with open(input_file,"rb") as f:
         # loop until done
@@ -146,6 +179,9 @@ def process_file(
                 print("end of file")
                 break
 
+            if c == "\n":
+                line_num += 1
+
             # convert character to ascii and pass it as input
             # get next state
             next_state = process_input(
@@ -156,7 +192,8 @@ def process_file(
 
             # done = terminal state it is not a real state but rather a logical state
             if next_state == "done":
-                # if last state was id then check if dealing with keyword or identifier and write token
+                # if last state was id then check
+                # if dealing with keyword or identifier and write token
                 if current_state == "id":
                     if id_name in keyword_set:
                         write_token(
@@ -176,20 +213,6 @@ def process_file(
                     current_state = "start"
                     # move cursor to prev character
                     f.seek(-1,1)
-                # if current state is a symbol
-                elif current_state in symbols_name:
-                    # get symbol
-                    symbol = chr(int(current_state.split("symbol")[1]))
-                    # write symbol token to XML file
-                    write_token(
-                        token=symbol,
-                        tag="symbol",
-                        output_file=output_file
-                    )
-                    # move cursor to previous character
-                    f.seek(-1,1)
-                    # reset FSA
-                    current_state = "start"
                 # if dealing with comment
                 elif current_state == "mmc" or current_state == "slc":
                     current_state = "start"
@@ -217,6 +240,34 @@ def process_file(
                     # reset id_name and FSA state
                     id_name = ""
                     current_state = "start"
+                # if current state is a symbol
+                elif c in symbols:
+                    # write symbol token to XML file
+                    write_token(
+                        token=c,
+                        tag="symbol",
+                        output_file=output_file
+                    )
+                    # reset FSA
+                    current_state = "start"
+                elif current_state == "symbol47":
+                    # write symbol token to XML file
+                    write_token(
+                        token='/',
+                        tag='symbol',
+                        output_file=output_file
+                    )
+                    # go back to previous character
+                    f.seek(-1,1)
+                    # reset fsa
+                    current_state = "start"
+            elif next_state == "error":
+                handle_error(
+                    state=current_state,
+                    character=c,
+                    line_num=line_num,
+                    input_file=input_file
+                )
             else:
                 # not final state
                 # set id_name value
@@ -268,18 +319,19 @@ def generate_fsa(
     #   S = {set of symbols}
     fsa = {
         "start":{
-            47: "symbol47", # /
+            ord("/"): "symbol47", # /
             13: "start", # [LR]
             10: "start", # [RF]
-            32: "start", # [space]
-            34: "string", # "
+            ord(" "): "start", # [space]
+            ord("\""): "string", # "
+            ord("\t"): "start", # [\t]
             "else": "error",
         },
         # / state
         # handled differently due to comments
         "symbol47": {
-            47: "slc", # /
-            42: "smc", # *
+            ord("/"): "slc", # /
+            ord("*"): "smc", # *
             "else": "done"
         },
         # start line comment
@@ -290,57 +342,58 @@ def generate_fsa(
         },
         # start multline comment
         "smc": {
-            42: "mmc",
+            ord("*"): "mmc",
             "else": "smc"
         },
         # middle multiline comment
         "mmc": {
-            47: "done",
+            ord("/"): "done",
             "else": "smc"
         },
         # identifier state
         "id": {
             "else": "error",
-            "{": "done",
-            "(": "done",
-            ",": "done",
-            ";": "done",
-            "[": "done",
-            "=" : "done",
-            ".": "done",
-            "+": "done",
-            "-": "done",
-            "*": "done",
-            "/": "done",
-            "&": "done",
-            "|": "done",
-            "<": "done",
-            ">": "done",
-            "]": "done",
-            ")": "done"
+            ord("{"): "done", # {
+            ord("("): "done",
+            ord(","): "done",
+            ord(";"): "done",
+            ord("["): "done",
+            ord("=") : "done",
+            ord("."): "done",
+            ord("+"): "done",
+            ord("-"): "done",
+            ord("*"): "done",
+            ord("/"): "done",
+            ord("&"): "done",
+            ord("|"): "done",
+            ord("<"): "done",
+            ord(">"): "done",
+            ord("]"): "done",
+            ord(")"): "done",
+            ord(" "): "done" # space
         },
         # integer state
         "int" : {
-            "+": "done",
-            "-": "done",
-            "*": "done",
-            "/": "done",
-            "&": "done",
-            "|": "done",
-            ">": "done",
-            "<": "done",
-            "=": "done",
-            "]": "done",
-            ";": "done",
-            ")": "done",
-            ",": "done",
+            ord("+"): "done",
+            ord("-"): "done",
+            ord("*"): "done",
+            ord("/"): "done",
+            ord("&"): "done",
+            ord("|"): "done",
+            ord(">"): "done",
+            ord("<"): "done",
+            ord("="): "done",
+            ord("]"): "done",
+            ord(";"): "done",
+            ord(")"): "done",
+            ord(","): "done",
             "else": "error"
         },
         # string state
         "string": {
             "else": "string",
-            34: "done", # "
-            92: "escape" # \
+            ord("\""): "done", # "
+            ord("\\"): "escape" # \
         },
         # escape state
         "escape": {
@@ -367,7 +420,7 @@ def generate_fsa(
 
     for v in symbols:
         # avoid /
-        if ord(v) not in fsa["start"].keys():
+        if ord(v) not in fsa["start"]:
             # map start to symbol in format symbol(symbol ascii code) via symbol ascii code
             fsa["start"][ord(v)] = "done"
 
@@ -390,7 +443,7 @@ def main():
     try:
         assert n == 2
     except AssertionError:
-        print("Error: Missing arguments")
+        print("Error: Missing or too many arguments")
         print("Program should be run: ")
         print("<program name> <source code>")
         sys.exit()
@@ -403,13 +456,6 @@ def main():
         ',',';','+','-','*','/','&',
         '|','<','>','=','~'
     })
-
-    # convert symbols in symbol set to symbol(symbol ascii code)
-    symbols_name = set()
-
-    for v in symbols:
-        # create set of symbol (symbol ascii code) used for terminal state determination
-        symbols_name.add(f"symbol{ord(v)}")
 
     # set of keywords
     keyword_set = set({
@@ -454,7 +500,7 @@ def main():
                     input_file=input_file,
                     output_file=output_file_name,
                     keyword_set=keyword_set,
-                    symbols_name=symbols_name,
+                    symbols=symbols,
                     fsa=fsa
                 )
     else:
@@ -463,12 +509,12 @@ def main():
         # get filename without extension
         filename = input_file.split('/')[-1].split('.')[0]
         # output file name
-        output_file_name = f"{filename}T.xml"
+        output_file_name = f"{filename}T1.xml"
         process_file(
             input_file=input_file,
             output_file=output_file_name,
             keyword_set=keyword_set,
-            symbols_name=symbols_name,
+            symbols=symbols,
             fsa=fsa
         )
 
