@@ -7,8 +7,11 @@ import sys
 import os
 import xml.etree.ElementTree as ET
 
-
-def write_tag(output_file: str, tag: str, is_closed: bool) -> None:
+def write_tag(
+    output_file: str,
+    tag: str,
+    is_closed: bool
+) -> None:
     """
     Purpose:
         write opening or closing tag
@@ -30,8 +33,10 @@ def write_tag(output_file: str, tag: str, is_closed: bool) -> None:
         else:
             f.write(f"<{tag}>\n")
 
-
-def write_token(output_file:str, token:dict[str,str]) -> None:
+def write_token(
+    output_file:str,
+    token:dict[str,str]
+) -> None:
     """
     Purpose:
         write value enclosed between tags
@@ -51,6 +56,8 @@ def write_token(output_file:str, token:dict[str,str]) -> None:
     Return:
         None
     """
+    # encode these tags because they
+    # cause an issue with parsing
     if token['value'] == "<":
         token['value'] = "&lt;"
     elif token['value'] == ">":
@@ -62,12 +69,11 @@ def write_token(output_file:str, token:dict[str,str]) -> None:
     with open(output_file,"a+",encoding="utf-8") as f:
         f.write(f"<{token['tag']}>{token['value']}</{token['tag']}>\n")
 
-
 def verify_token_type(
-        actual_token : dict[str,str],
-        expected_tokens : list[dict[str,str]],
-        input_file : str
-    )->None:
+    actual_token : dict[str,str],
+    expected_tokens : list[dict[str,str]],
+    input_file : str
+)->None:
     """
     Purpose:
         verify that token matches expected value
@@ -122,12 +128,12 @@ def verify_token_type(
         sys.exit()
 
 def process_class(
-        output_file: str,
-        token: dict[str,str],
-        token_list: list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    )->tuple[int,dict[str,str]]:
+    output_file: str,
+    token: dict[str,str],
+    token_list: list[dict[str,str]],
+    current_index : int,
+    input_file : str
+)->tuple[int,dict[str,str]]:
     """
     Purpose:
         process class
@@ -158,7 +164,11 @@ def process_class(
     write_tag(output_file=output_file,tag="class",is_closed=False)
 
     # verify if tag is class else raise Exception
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'keyword','value':'class'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'keyword','value':'class'}],
+        input_file=input_file
+    )
 
     # write <keyword> class </keyword> token
     write_token(output_file=output_file,token=token)
@@ -167,7 +177,11 @@ def process_class(
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
     # verify if tag is class else raise Exception
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'identifier'}],
+        input_file=input_file
+    )
 
     # write <identifer> className </identifier> token
     write_token(output_file=output_file,token=token)
@@ -176,7 +190,11 @@ def process_class(
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
     # verify if tag is class else raise Exception
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'{'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'{'}],
+        input_file=input_file
+    )
 
     # write <symbol> { </symbol> token
     write_token(output_file=output_file,token=token)
@@ -184,6 +202,7 @@ def process_class(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
+    # 0 or more class var declarations
     while token['tag'] == "keyword" and (token['value'] == "static" or token["value"] == "field"):
         # process variable declaration
         current_index,token = process_class_var_declaration(
@@ -194,6 +213,7 @@ def process_class(
             input_file=input_file
         )
 
+    # 0 or more subroutine declarations
     while token['tag'] == "keyword" and \
     (token['value'] == "constructor" or token['value'] == "function" or \
      token['value'] == "method"):
@@ -206,9 +226,12 @@ def process_class(
             input_file=input_file
         )
 
-
     # verify if tag is class else raise Exception
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'}'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'}'}],
+        input_file=input_file
+    )
 
     # write <symbol> } </symbol> token
     write_token(output_file=output_file,token=token)
@@ -255,11 +278,15 @@ def process_subroutine_declaration(
     # write <subroutineDec>
     write_tag(output_file=output_file,tag="subroutineDec",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[
-        {'tag': 'keyword', 'value': 'constructor'},
-        {'tag': 'keyword', 'value': 'function'},
-        {'tag': 'keyword', 'value': 'method'}
-    ],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[
+            {'tag': 'keyword', 'value': 'constructor'},
+            {'tag': 'keyword', 'value': 'function'},
+            {'tag': 'keyword', 'value': 'method'}
+        ],
+        input_file=input_file
+    )
 
     # write <keyword> constructor OR function OR method </keyword>
     write_token(output_file=output_file,token=token)
@@ -267,13 +294,16 @@ def process_subroutine_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[
-        {'tag':'keyword','value':'void'},
-        {'tag':'keyword','value':'int'},
-        {'tag':'keyword','value':'char'},
-        {'tag':'keyword','value':'boolean'},
-        {'tag':'identifier'},
-    ],input_file=input_file)
+    verify_token_type(actual_token=token,
+        expected_tokens=[
+            {'tag':'keyword','value':'void'},
+            {'tag':'keyword','value':'int'},
+            {'tag':'keyword','value':'char'},
+            {'tag':'keyword','value':'boolean'},
+            {'tag':'identifier'},
+        ],
+        input_file=input_file
+    )
 
     # write <keyword> void OR int OR char OR boolean </keyword>
     # OR <identifier> className </identifier>
@@ -282,7 +312,11 @@ def process_subroutine_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'identifier'}],
+        input_file=input_file
+    )
 
     # write <identifier> subprocedure name </identifier>
     write_token(output_file=output_file,token=token)
@@ -290,7 +324,11 @@ def process_subroutine_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'('}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'('}],
+        input_file=input_file
+    )
 
     # write <symbol> ( </symbol>
     write_token(output_file=output_file,token=token)
@@ -298,9 +336,19 @@ def process_subroutine_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    current_index, token = process_parameter_list(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_parameter_list(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':')'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':')'}],
+        input_file=input_file
+    )
 
     # write <symbol> ) </symbol>
     write_token(output_file=output_file,token=token)
@@ -308,7 +356,13 @@ def process_subroutine_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    current_index, token = process_subroutine_body(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_subroutine_body(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
     # write </subroutineDec>
     write_tag(output_file=output_file,tag="subroutineDec",is_closed=True)
@@ -316,12 +370,12 @@ def process_subroutine_declaration(
     return current_index, token
 
 def process_subroutine_body(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process subroutine body
@@ -352,7 +406,11 @@ def process_subroutine_body(
     # write <subroutineBody>
     write_tag(output_file=output_file,tag="subroutineBody",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'{'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'{'}],
+        input_file=input_file
+    )
 
     # write <symbol> { </symbol>
     write_token(output_file=output_file,token=token)
@@ -361,11 +419,27 @@ def process_subroutine_body(
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
     while token['tag'] == 'keyword' and token['value'] == 'var':
-        current_index, token = process_variable_declaration(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_variable_declaration(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
-    current_index, token = process_statements(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_statements(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'}'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'}'}],
+        input_file=input_file
+    )
 
     # write <symbol> } </symbol>
     write_token(output_file=output_file,token=token)
@@ -378,12 +452,12 @@ def process_subroutine_body(
     return current_index, token
 
 def process_statements(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process statements
@@ -413,17 +487,49 @@ def process_statements(
     # write <statements>
     write_tag(output_file=output_file,tag="statements",is_closed=False)
 
-    while token['tag'] == 'keyword' and (token['value'] == 'let' or token['value'] == 'if' or token['value'] == 'while' or token['value'] == 'do' or token['value'] == 'return'):
+    while token['tag'] == 'keyword' and \
+        (token['value'] == 'let' or token['value'] == 'if' or \
+        token['value'] == 'while' or token['value'] == 'do' or \
+        token['value'] == 'return'):
         if token['tag'] == 'keyword' and token['value'] == 'let':
-            current_index, token = process_let_statement(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+            current_index, token = process_let_statement(
+                output_file=output_file,
+                token=token,
+                token_list=token_list,
+                current_index=current_index,
+                input_file=input_file
+            )
         elif token['tag'] == 'keyword' and token['value'] == 'if':
-            current_index, token = process_if_statement(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+            current_index, token = process_if_statement(
+                output_file=output_file,
+                token=token,
+                token_list=token_list,
+                current_index=current_index,
+                input_file=input_file
+            )
         elif token['tag'] == 'keyword' and token['value'] == 'while':
-            current_index, token = process_while_statement(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+            current_index, token = process_while_statement(
+                output_file=output_file,
+                token=token,token_list=token_list,
+                current_index=current_index,
+                input_file=input_file
+            )
         elif token['tag'] == 'keyword' and token['value'] == 'do':
-            current_index, token = process_do_statement(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+            current_index, token = process_do_statement(
+                output_file=output_file,
+                token=token,
+                token_list=token_list,
+                current_index=current_index,
+                input_file=input_file
+            )
         elif token['tag'] == 'keyword' and token['value'] == 'return':
-            current_index, token = process_return_statement(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+            current_index, token = process_return_statement(
+                output_file=output_file,
+                token=token,
+                token_list=token_list,
+                current_index=current_index,
+                input_file=input_file
+            )
 
     # write </statements>
     write_tag(output_file=output_file,tag="statements",is_closed=True)
@@ -431,12 +537,12 @@ def process_statements(
     return current_index, token
 
 def process_while_statement(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process while statements
@@ -467,35 +573,67 @@ def process_while_statement(
     # write <whileStatement>
     write_tag(output_file=output_file,tag="whileStatement",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'keyword','value':'while'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'keyword','value':'while'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'('}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'('}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_expression(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':')'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':')'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'{'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'{'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    current_index, token = process_statements(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_statements(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'}'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'}'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
@@ -508,12 +646,12 @@ def process_while_statement(
 
 
 def process_if_statement(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process if statements
@@ -543,35 +681,67 @@ def process_if_statement(
     # write <ifStatement>
     write_tag(output_file=output_file,tag="ifStatement",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'keyword','value':'if'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'keyword','value':'if'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'('}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'('}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_expression(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
+      
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':')'}],
+        input_file=input_file
+    )
+
+    write_token(output_file=output_file,token=token)
+
+    current_index, token = get_next_token(token_list=token_list,i=current_index)
+
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'{'}],
+        input_file=input_file
+    )
+
+    write_token(output_file=output_file,token=token)
+
+    current_index, token = get_next_token(token_list=token_list,i=current_index)
+
+    current_index, token = process_statements(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
     
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':')'}],input_file=input_file)
-
-    write_token(output_file=output_file,token=token)
-
-    current_index, token = get_next_token(token_list=token_list,i=current_index)
-
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'{'}],input_file=input_file)
-
-    write_token(output_file=output_file,token=token)
-
-    current_index, token = get_next_token(token_list=token_list,i=current_index)
-
-    current_index, token = process_statements(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
-    
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'}'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'}'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
@@ -582,15 +752,29 @@ def process_if_statement(
 
         current_index, token = get_next_token(token_list=token_list,i=current_index)
         
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'{'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':'{'}],
+            input_file=input_file
+        )
 
         write_token(output_file=output_file,token=token)
 
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        current_index, token = process_statements(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_statements(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'}'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':'}'}],
+            input_file=input_file
+        )
 
         write_token(output_file=output_file,token=token)
 
@@ -603,12 +787,12 @@ def process_if_statement(
 
 
 def process_do_statement(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process return statements
@@ -639,15 +823,29 @@ def process_do_statement(
     # write <doStatement>
     write_tag(output_file=output_file,tag="doStatement",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'keyword','value':'do'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'keyword','value':'do'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    current_index, token = process_subroutine_call(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_subroutine_call(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':';'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':';'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
@@ -660,12 +858,12 @@ def process_do_statement(
 
 
 def process_return_statement(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process return statements
@@ -696,7 +894,11 @@ def process_return_statement(
     # write <returnStatement>
     write_tag(output_file=output_file,tag="returnStatement",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'keyword','value':'return'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'keyword','value':'return'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
@@ -710,9 +912,19 @@ def process_return_statement(
     token['tag'] == 'identifier' or \
     token['tag'] == 'symbol' and (token['value'] == '-' or token['value'] == '~') or \
     token['tag'] == 'symbol' and token['value'] == '(':
-        current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_expression(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':';'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':';'}],
+        input_file=input_file
+    )
 
     write_token(output_file=output_file,token=token)
 
@@ -725,12 +937,12 @@ def process_return_statement(
 
 
 def process_let_statement(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process statements
@@ -761,7 +973,11 @@ def process_let_statement(
     # write <letStatement>
     write_tag(output_file=output_file,tag="letStatement",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'keyword','value':'let'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'keyword','value':'let'}],
+        input_file=input_file
+    )
 
     # write <keyword> let </keyword> token
     write_token(output_file=output_file,token=token)
@@ -769,7 +985,11 @@ def process_let_statement(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'identifier'}],
+        input_file=input_file
+    )
 
     # write <identifier> varName </identifier>
     write_token(output_file=output_file,token=token)
@@ -784,9 +1004,19 @@ def process_let_statement(
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_expression(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':']'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':']'}],
+            input_file=input_file
+        )
 
         # write <symbol> ] </symbol>
         write_token(output_file=output_file,token=token)
@@ -794,7 +1024,11 @@ def process_let_statement(
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'='}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':'='}],
+        input_file=input_file
+    )
 
     # write <symbol> = </symbol>
     write_token(output_file=output_file,token=token)
@@ -802,9 +1036,19 @@ def process_let_statement(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_expression(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':';'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':';'}],
+        input_file=input_file
+    )
 
     # write <symbol> ; </symbol>
     write_token(output_file=output_file,token=token)
@@ -818,12 +1062,12 @@ def process_let_statement(
     return current_index, token
 
 def process_expression(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process expression
@@ -856,11 +1100,17 @@ def process_expression(
 
     #print(f"process expression received = {token}")
 
-    current_index, token = process_term(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_term(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
     while token['tag'] == 'symbol' and \
         (token['value'] == '+' or token['value'] == '-' or \
-         token['value'] == '*' or token['value'] == '/' or \
+        token['value'] == '*' or token['value'] == '/' or \
         token['value'] == '&' or token['value'] == '|' or \
         token['value'] == '<' or token['value'] == '>' or \
         token['value'] == '='):
@@ -871,7 +1121,13 @@ def process_expression(
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
         # process term
-        current_index, token = process_term(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_term(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
     
     # write </expression>
     write_tag(output_file=output_file,tag="expression",is_closed=True)
@@ -879,12 +1135,12 @@ def process_expression(
     return current_index, token
 
 def process_term(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process expression
@@ -926,7 +1182,9 @@ def process_term(
         write_token(output_file=output_file,token=token)
 
         current_index, token = get_next_token(token_list=token_list,i=current_index)
-    elif token['tag'] == 'keyword' and (token['value'] == 'true' or token['value'] == 'false' or token['value'] == 'null' or token['value'] == 'this'):
+    elif token['tag'] == 'keyword' and \
+        (token['value'] == 'true' or token['value'] == 'false' or\
+        token['value'] == 'null' or token['value'] == 'this'):
         # write <keyword> true OR false OR null OR this </keyword>
         write_token(output_file=output_file,token=token)
 
@@ -941,23 +1199,43 @@ def process_term(
             token=next_token
             current_index=next_index
 
-            verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'['}],input_file=input_file)
+            verify_token_type(
+                actual_token=token,
+                expected_tokens=[{'tag':'symbol','value':'['}],
+                input_file=input_file
+            )
 
             # write <symbol> [ </symbol>
             write_token(output_file=output_file,token=token)
 
             current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-            current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+            current_index, token = process_expression(
+                output_file=output_file,
+                token=token,
+                token_list=token_list,
+                current_index=current_index,
+                input_file=input_file
+            )
 
-            verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':']'}],input_file=input_file)
+            verify_token_type(
+                actual_token=token,
+                expected_tokens=[{'tag':'symbol','value':']'}],
+                input_file=input_file
+            )
 
             # write <symbol> ] </symbol>
             write_token(output_file=output_file,token=token)
 
             current_index, token = get_next_token(token_list=token_list,i=current_index)
         elif next_token['tag'] == 'symbol' and (next_token['value'] == '(' or next_token['value'] == '.'):
-            current_index, token = process_subroutine_call(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+            current_index, token = process_subroutine_call(
+                output_file=output_file,
+                token=token,
+                token_list=token_list,
+                current_index=current_index,
+                input_file=input_file
+            )
         else:
             # write <identifier> var name </identifier>
             write_token(output_file=output_file,token=token)
@@ -971,7 +1249,13 @@ def process_term(
 
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        current_index, token = process_term(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_term(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
     
     elif token['tag'] == 'symbol' and token['value'] == '(':
         # write <symbol> ( </symbol>
@@ -979,9 +1263,19 @@ def process_term(
 
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_expression(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':')'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':')'}],
+            input_file=input_file
+        )
 
         # write <symbol> ) </symbol>
         write_token(output_file=output_file,token=token)
@@ -995,12 +1289,12 @@ def process_term(
     return current_index, token
 
 def process_subroutine_call(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process subroutine call
@@ -1028,7 +1322,11 @@ def process_subroutine_call(
     Return:
         current index and tokens
     """
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'identifier'}],
+        input_file=input_file
+    )
     # write <identifier> subroutine name or class name or var name </identifier>
     write_token(output_file=output_file,token=token)
 
@@ -1043,9 +1341,19 @@ def process_subroutine_call(
 
         #print(f"token = {token}")
 
-        current_index, token = process_expression_list(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_expression_list(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':')'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':')'}],
+            input_file=input_file
+        )
 
         # write <symbol> ) </symbol>
         write_token(output_file=output_file,token=token)
@@ -1059,7 +1367,11 @@ def process_subroutine_call(
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'identifier'}],
+            input_file=input_file
+        )
 
         # write <identifier> subroutine name </identifier>
         write_token(output_file=output_file,token=token)
@@ -1067,16 +1379,30 @@ def process_subroutine_call(
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':'('}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':'('}],
+            input_file=input_file
+        )
 
         # write <symbol> ( </symbol>
         write_token(output_file=output_file,token=token)
 
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        current_index, token = process_expression_list(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_expression_list(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':')'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':')'}],
+            input_file=input_file
+        )
 
         # write <symbol> ) </symbol>
         write_token(output_file=output_file,token=token)
@@ -1087,12 +1413,12 @@ def process_subroutine_call(
     return current_index, token
 
 def process_expression_list(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process subroutine call
@@ -1141,7 +1467,13 @@ def process_expression_list(
 
         return current_index, token
 
-    current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+    current_index, token = process_expression(
+        output_file=output_file,
+        token=token,
+        token_list=token_list,
+        current_index=current_index,
+        input_file=input_file
+    )
 
     while token['tag'] == 'symbol' and token['value'] == ',':
         # write <symbol> , </symbol>
@@ -1149,7 +1481,13 @@ def process_expression_list(
 
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        current_index, token = process_expression(output_file=output_file,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_expression(
+            output_file=output_file,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
     # write </expressionList>
     write_tag(output_file=output_file,tag="expressionList",is_closed=True)
@@ -1157,12 +1495,12 @@ def process_expression_list(
     return current_index, token
 
 def process_variable_declaration(
-        output_file : str,
-        token : dict[str,str],
-        token_list : list[dict[str,str]],
-        current_index : int,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token : dict[str,str],
+    token_list : list[dict[str,str]],
+    current_index : int,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process variable declaration
@@ -1190,7 +1528,11 @@ def process_variable_declaration(
     # write <varDec>
     write_tag(output_file=output_file,tag="varDec",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'keyword','value':'var'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'keyword','value':'var'}],
+        input_file=input_file
+    )
 
     # write <keyword> var </keyword>
     write_token(output_file=output_file,token=token)
@@ -1198,12 +1540,16 @@ def process_variable_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[
-        {'tag':'keyword','value':'int'},
-        {'tag':'keyword','value':'char'},
-        {'tag':'keyword','value':'boolean'},
-        {'tag':'identifier'},
-    ],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[
+            {'tag':'keyword','value':'int'},
+            {'tag':'keyword','value':'char'},
+            {'tag':'keyword','value':'boolean'},
+            {'tag':'identifier'}
+        ],
+        input_file=input_file
+    )
 
     # write <keyword> int or boolean or char </keyword> OR <identifier> className </identifier>
     write_token(output_file=output_file,token=token)
@@ -1211,7 +1557,11 @@ def process_variable_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'identifier'}],
+        input_file=input_file
+    )
 
     # write <identifier> varName </identifier>
     write_token(output_file=output_file,token=token)
@@ -1226,7 +1576,11 @@ def process_variable_declaration(
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'identifier'}],
+            input_file=input_file
+        )
 
         # write <identifier> varName </identifier>
         write_token(output_file=output_file,token=token)
@@ -1234,7 +1588,11 @@ def process_variable_declaration(
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':';'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':';'}],
+        input_file=input_file
+    )
 
     # write <symbol> ; </symbol>
     write_token(output_file=output_file,token=token)
@@ -1248,12 +1606,12 @@ def process_variable_declaration(
     return current_index, token
 
 def process_parameter_list(
-        output_file : str,
-        token: dict[str,str],
-        token_list: list[dict[str,str]],
-        current_index : str,
-        input_file : str
-    ) -> tuple[int,dict[str,str]]:
+    output_file : str,
+    token: dict[str,str],
+    token_list: list[dict[str,str]],
+    current_index : str,
+    input_file : str
+) -> tuple[int,dict[str,str]]:
     """
     Purpose:
         process subroutine declaration
@@ -1285,14 +1643,20 @@ def process_parameter_list(
     # write <parameterList>
     write_tag(output_file=output_file,tag="parameterList",is_closed=False)
     
-    if (token['tag'] == "keyword" and (token['value'] == "int" or token['value'] == "char" or token['value'] == "boolean")) or (token['tag'] == 'identifier'):
+    if (token['tag'] == "keyword" and \
+        (token['value'] == "int" or token['value'] == "char" or\
+        token['value'] == "boolean")) or (token['tag'] == 'identifier'):
         # write <keyword> data type </keyword> or <identifier> className </identifier> token
         write_token(output_file=output_file,token=token)
 
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'identifier'}],
+            input_file=input_file
+        )
 
         # write <identifier> argument Name </identifier>
         write_token(output_file=output_file,token=token)
@@ -1307,12 +1671,16 @@ def process_parameter_list(
             # get next token
             current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-            verify_token_type(actual_token=token,expected_tokens=[
-                {'tag':'keyword','value':'int'},
-                {'tag':'keyword','value':'char'},
-                {'tag':'keyword','value':'boolean'},
-                {'tag':'identifier'},
-            ],input_file=input_file)
+            verify_token_type(
+                actual_token=token,
+                expected_tokens=[
+                    {'tag':'keyword','value':'int'},
+                    {'tag':'keyword','value':'char'},
+                    {'tag':'keyword','value':'boolean'},
+                    {'tag':'identifier'},
+                ],
+                input_file=input_file
+            )
 
             # write <keyword> data type </keyword> or <identifier> className </identifier> token
             write_token(output_file=output_file,token=token)
@@ -1320,7 +1688,11 @@ def process_parameter_list(
             # get next token
             current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-            verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+            verify_token_type(
+                actual_token=token,
+                expected_tokens=[{'tag':'identifier'}],
+                input_file=input_file
+            )
 
             # write <identifier> argument Name </identifier>
             write_token(output_file=output_file,token=token)
@@ -1373,10 +1745,14 @@ def process_class_var_declaration(
     # write <classVarDec>
     write_tag(output_file=output_file,tag="classVarDec",is_closed=False)
 
-    verify_token_type(actual_token=token,expected_tokens=[
-        {'tag':'keyword','value':'static'},
-        {'tag':'keyword','value':'field'}
-    ],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[
+            {'tag':'keyword','value':'static'},
+            {'tag':'keyword','value':'field'}
+        ],
+        input_file=input_file
+    )
 
     # write <keyword> static OR field </keyword>
     write_token(output_file=output_file,token=token)
@@ -1384,12 +1760,16 @@ def process_class_var_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[
-        {'tag':'keyword','value':'int'},
-        {'tag':'keyword','value':'char'},
-        {'tag':'keyword','value':'boolean'},
-        {'tag':'identifier'}
-    ],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[
+            {'tag':'keyword','value':'int'},
+            {'tag':'keyword','value':'char'},
+            {'tag':'keyword','value':'boolean'},
+            {'tag':'identifier'}
+        ],
+        input_file=input_file
+    )
 
     # write <keyword> data  type </keyword> OR <identifier> className </identifier>
     write_token(output_file=output_file,token=token)
@@ -1397,7 +1777,11 @@ def process_class_var_declaration(
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'identifier'}],
+        input_file=input_file
+    )
 
     # write <identifier> identifier name </identifier>
     write_token(output_file=output_file,token=token)
@@ -1406,14 +1790,22 @@ def process_class_var_declaration(
     current_index, token = get_next_token(token_list=token_list,i=current_index)
 
     while token['tag'] == 'symbol' and token['value'] == ',':
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':','}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'symbol','value':','}],
+            input_file=input_file
+        )
         # write <symbol> , </symbol>
         write_token(output_file=output_file,token=token)
 
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        verify_token_type(actual_token=token,expected_tokens=[{'tag':'identifier'}],input_file=input_file)
+        verify_token_type(
+            actual_token=token,
+            expected_tokens=[{'tag':'identifier'}],
+            input_file=input_file
+        )
 
         # write <identifier> identifier name </identifier>
         write_token(output_file=output_file,token=token)
@@ -1421,7 +1813,11 @@ def process_class_var_declaration(
         # get next token
         current_index,token=get_next_token(token_list=token_list,i=current_index)
 
-    verify_token_type(actual_token=token,expected_tokens=[{'tag':'symbol','value':';'}],input_file=input_file)
+    verify_token_type(
+        actual_token=token,
+        expected_tokens=[{'tag':'symbol','value':';'}],
+        input_file=input_file
+    )
 
     # write <symbol> ; </symbol>
     write_token(output_file=output_file,token=token)
@@ -1463,24 +1859,27 @@ def generate_token_list(input_file:str)->list[dict[str,str]]:
 
     return data
 
-def get_next_token(token_list:list[dict],i:int)->tuple[int,dict[str,str]]:
+def get_next_token(
+    token_list : list[dict],
+    i:int
+)->tuple[int,dict[str,str]]:
     """
-        Purpose:
-            Retrieve next token from token list
+    Purpose:
+        Retrieve next token from token list
 
-        Arguments:
-            token_list:
-                list of tokens
+    Arguments:
+        token_list:
+            list of tokens
 
-            i:
-                index to retrieve
+        i:
+            index to retrieve
 
-        Return:
-            current_index:
-                updated index
+    Return:
+        current_index:
+            updated index
 
-            token:
-                token in token list
+        token:
+            token in token list
     """
     t = i + 1
     return t,token_list[t]
@@ -1521,7 +1920,13 @@ def main():
                 token_list = generate_token_list(input_file=input_file)
                 current_index = -1
                 current_index, token = get_next_token(token_list=token_list,i=current_index)
-                current_index, token = process_class(output_file=output_file_name,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+                current_index, token = process_class(
+                    output_file=output_file_name,
+                    token=token,
+                    token_list=token_list,
+                    current_index=current_index,
+                    input_file=input_file
+                )
     else:
         # get single filename
         input_file = sys.argv[1]
@@ -1534,7 +1939,13 @@ def main():
         current_index = -1
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
-        current_index, token = process_class(output_file=output_file_name,token=token,token_list=token_list,current_index=current_index,input_file=input_file)
+        current_index, token = process_class(
+            output_file=output_file_name,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
 
 if __name__ == "__main__":
     main()
