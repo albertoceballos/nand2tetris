@@ -8,10 +8,10 @@ import os
 import xml.etree.ElementTree as ET
 
 def write_tag(
-    output_file: str,
-    tag: str,
-    is_closed: bool
-) -> None:
+    output_file,
+    tag,
+    is_closed
+):
     """
     Purpose:
         write opening or closing tag
@@ -34,9 +34,9 @@ def write_tag(
             f.write(f"<{tag}>\n")
 
 def write_token(
-    output_file:str,
-    token:dict[str,str]
-) -> None:
+    output_file,
+    token
+):
     """
     Purpose:
         write value enclosed between tags
@@ -70,10 +70,10 @@ def write_token(
         f.write(f"<{token['tag']}>{token['value']}</{token['tag']}>\n")
 
 def verify_token_type(
-    actual_token : dict[str,str],
-    expected_tokens : list[dict[str,str]],
-    input_file : str
-)->None:
+    actual_token,
+    expected_tokens,
+    input_file
+):
     """
     Purpose:
         verify that token matches expected value
@@ -128,12 +128,12 @@ def verify_token_type(
         sys.exit()
 
 def process_class(
-    output_file: str,
-    token: dict[str,str],
-    token_list: list[dict[str,str]],
-    current_index : int,
-    input_file : str
-)->tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process class
@@ -242,12 +242,12 @@ def process_class(
     return current_index, token
 
 def process_subroutine_declaration(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int, dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process subroutine declaration
@@ -370,12 +370,12 @@ def process_subroutine_declaration(
     return current_index, token
 
 def process_subroutine_body(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process subroutine body
@@ -452,12 +452,12 @@ def process_subroutine_body(
     return current_index, token
 
 def process_statements(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process statements
@@ -537,12 +537,12 @@ def process_statements(
     return current_index, token
 
 def process_while_statement(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process while statements
@@ -646,12 +646,12 @@ def process_while_statement(
 
 
 def process_if_statement(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process if statements
@@ -708,7 +708,7 @@ def process_if_statement(
         current_index=current_index,
         input_file=input_file
     )
-      
+
     verify_token_type(
         actual_token=token,
         expected_tokens=[{'tag':'symbol','value':')'}],
@@ -787,12 +787,12 @@ def process_if_statement(
 
 
 def process_do_statement(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process return statements
@@ -858,12 +858,12 @@ def process_do_statement(
 
 
 def process_return_statement(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process return statements
@@ -937,12 +937,12 @@ def process_return_statement(
 
 
 def process_let_statement(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process statements
@@ -1062,12 +1062,12 @@ def process_let_statement(
     return current_index, token
 
 def process_expression(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process expression
@@ -1135,12 +1135,12 @@ def process_expression(
     return current_index, token
 
 def process_term(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process expression
@@ -1289,12 +1289,12 @@ def process_term(
     return current_index, token
 
 def process_subroutine_call(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process subroutine call
@@ -1413,12 +1413,12 @@ def process_subroutine_call(
     return current_index, token
 
 def process_expression_list(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process subroutine call
@@ -1495,12 +1495,12 @@ def process_expression_list(
     return current_index, token
 
 def process_variable_declaration(
-    output_file : str,
-    token : dict[str,str],
-    token_list : list[dict[str,str]],
-    current_index : int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process variable declaration
@@ -1606,12 +1606,12 @@ def process_variable_declaration(
     return current_index, token
 
 def process_parameter_list(
-    output_file : str,
-    token: dict[str,str],
-    token_list: list[dict[str,str]],
-    current_index : str,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process subroutine declaration
@@ -1706,12 +1706,12 @@ def process_parameter_list(
     return current_index, token
 
 def process_class_var_declaration(
-    output_file: str,
-    token: dict[str,str],
-    token_list: list[dict[str,str]],
-    current_index: int,
-    input_file : str
-) -> tuple[int,dict[str,str]]:
+    output_file,
+    token,
+    token_list,
+    current_index,
+    input_file
+):
     """
     Purpose:
         process class variable declaration
@@ -1830,7 +1830,7 @@ def process_class_var_declaration(
 
     return current_index, token
 
-def generate_token_list(input_file:str)->list[dict[str,str]]:
+def generate_token_list(input_file):
     """
     Purpose:
         Generate token list from input file
@@ -1860,9 +1860,9 @@ def generate_token_list(input_file:str)->list[dict[str,str]]:
     return data
 
 def get_next_token(
-    token_list : list[dict],
-    i:int
-)->tuple[int,dict[str,str]]:
+    token_list,
+    i
+):
     """
     Purpose:
         Retrieve next token from token list
@@ -1883,6 +1883,75 @@ def get_next_token(
     """
     t = i + 1
     return t,token_list[t]
+
+def start_parse(filename):
+    """
+    Purpose:
+        This function will start the parsing process
+
+    Arguments:
+        filename:
+            file or directory name
+
+    Return:
+        None
+    """
+    # check if directory
+    if os.path.isdir(filename):
+        # get directory name
+        dir_name = filename
+
+        # iterate over files
+        for file in os.listdir(dir_name):
+            # get file
+            if file.endswith("T.xml"):
+                
+                output_file_name = file.split('/')[-1].split('.')[0]
+                output_file_name = output_file_name[0:len(output_file_name)-1]
+                original_name = output_file_name
+                output_file_name = f"{dir_name}/{output_file_name}.pxml"
+                input_file = f"{filename}/{file}"
+                token_list = generate_token_list(input_file=input_file)
+                current_index = -1
+                current_index, token = get_next_token(token_list=token_list,i=current_index)
+                current_index, token = process_class(
+                    output_file=output_file_name,
+                    token=token,
+                    token_list=token_list,
+                    current_index=current_index,
+                    input_file=input_file
+                )
+
+                output_file_name2 = os.path.join(dir_name,f"{original_name}.xml")
+                if os.path.isfile(output_file_name2):
+                    os.remove(output_file_name2)
+                os.rename(output_file_name,output_file_name2)
+    else:
+        # get single filename
+        input_file = filename
+        # get filename without extension
+        filename = input_file.split('/')[-1].split('.')[0]
+        
+        # output file name
+        filename = filename[0:len(filename)-1]
+        original_name = filename
+        output_file_name = f"{filename}.pxml"
+        token_list = generate_token_list(input_file=input_file)
+        current_index = -1
+        current_index, token = get_next_token(token_list=token_list,i=current_index)
+
+        current_index, token = process_class(
+            output_file=output_file_name,
+            token=token,
+            token_list=token_list,
+            current_index=current_index,
+            input_file=input_file
+        )
+
+        output_file_name2 = f"{original_name}.xml"
+        if os.path.isfile(output_file_name2):
+            os.remove(output_file_name2)
+        os.rename(output_file_name,output_file_name2)
 
 def main():
     """
@@ -1905,47 +1974,7 @@ def main():
     # get filename
     filename = sys.argv[1]
 
-    # check if directory
-    if os.path.isdir(filename):
-        # get directory name
-        dir_name = sys.argv[1]
-
-        # iterate over files
-        for file in os.listdir(dir_name):
-            # get file
-            if file.endswith("T.xml"):
-                output_file_name = file.split('/')[-1].split('.')[0]
-                output_file_name = f"{output_file_name}TEST.xml"
-                input_file = f"{filename}/{file}"
-                token_list = generate_token_list(input_file=input_file)
-                current_index = -1
-                current_index, token = get_next_token(token_list=token_list,i=current_index)
-                current_index, token = process_class(
-                    output_file=output_file_name,
-                    token=token,
-                    token_list=token_list,
-                    current_index=current_index,
-                    input_file=input_file
-                )
-    else:
-        # get single filename
-        input_file = sys.argv[1]
-        # get filename without extension
-        filename = input_file.split('/')[-1].split('.')[0]
-        print(f"input_file={input_file}")
-        # output file name
-        output_file_name = f"{filename}TTest.xml"
-        token_list = generate_token_list(input_file=input_file)
-        current_index = -1
-        current_index, token = get_next_token(token_list=token_list,i=current_index)
-
-        current_index, token = process_class(
-            output_file=output_file_name,
-            token=token,
-            token_list=token_list,
-            current_index=current_index,
-            input_file=input_file
-        )
+    start_parse(filename=filename)
 
 if __name__ == "__main__":
     main()

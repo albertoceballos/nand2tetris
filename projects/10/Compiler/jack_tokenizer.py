@@ -7,10 +7,10 @@ import string
 import os
 
 def write_tag(
-    tag : str,
-    output_file : str,
-    closed : bool
-) -> None:
+    tag,
+    output_file,
+    closed
+):
     """
     Purpose:
         write opening and closing tag for set of statements
@@ -35,10 +35,10 @@ def write_tag(
             f3.write(f"<{tag}>\n")
 
 def process_input(
-    c : str,
-    current_state : str,
-    fsa : dict[str,dict[str,str]]
-) -> str:
+    c,
+    current_state,
+    fsa
+):
     """
     Purpose:
         navigate to next state in FSA using input "c" which is current character
@@ -63,9 +63,9 @@ def process_input(
     return current_state
 
 def write_token(
-    token : str,
-    tag : str,
-    output_file : str
+    token,
+    tag,
+    output_file
 ):
     """
     Purpose:
@@ -96,11 +96,11 @@ def write_token(
         f1.write(f"<{tag}> {token} </{tag}>\n")
 
 def handle_error(
-    state : str,
-    character : str,
-    line_num : int,
-    input_file : str
-) -> None:
+    state,
+    character,
+    line_num,
+    input_file
+):
     """
     Purpose:
         Raise errors and exit gracefully
@@ -127,12 +127,12 @@ def handle_error(
     sys.exit()
 
 def process_file(
-    input_file : str,
-    output_file : str,
-    keyword_set : set[str],
-    symbols : set[str],
-    fsa : dict[str,dict[str,str]]
-) -> None:
+    input_file,
+    output_file,
+    keyword_set,
+    symbols,
+    fsa
+):
     """
     Purpose:
         Process file
@@ -287,8 +287,8 @@ def process_file(
         )
 
 def generate_fsa(
-    symbols : set[str]
-) -> dict[str,dict[int,str]]:
+    symbols
+):
     """
     Purpose:
         Generate Finite State Automata for tokenizer
@@ -426,30 +426,19 @@ def generate_fsa(
 
     return fsa
 
-def main():
+
+def start_tokenize(filename):
     """
     Purpose:
-        Entry point of program
+        This function will start the token generation process
 
     Arguments:
-        None
+        filename:
+            file or directory name
 
     Return:
         None
     """
-    # get cmd args
-    n = len(sys.argv)
-
-    try:
-        assert n == 2
-    except AssertionError:
-        print("Error: Missing or too many arguments")
-        print("Program should be run: ")
-        print("<program name> <source code>")
-        sys.exit()
-    # get filename
-    filename = sys.argv[1]
-
     # set of symbols
     symbols = set({
         '{','}','(',')','[',']','.',
@@ -487,14 +476,15 @@ def main():
     # check if directory
     if os.path.isdir(filename):
         # get directory name
-        dir_name = sys.argv[1]
+        dir_name = filename
 
         # iterate over files
         for file in os.listdir(dir_name):
             # get file
             if file.endswith(".jack"):
                 output_file_name = file.split('/')[-1].split('.')[0]
-                output_file_name = f"{output_file_name}T1.xml"
+                original_name = output_file_name
+                output_file_name = f"{dir_name}/{output_file_name}T.txml"
                 input_file = f"{filename}/{file}"
                 process_file(
                     input_file=input_file,
@@ -503,13 +493,17 @@ def main():
                     symbols=symbols,
                     fsa=fsa
                 )
+                output_file_name2 = os.path.join(dir_name,f"{original_name}T.xml")
+                if os.path.isfile(output_file_name2):
+                    os.remove(output_file_name2)
+                os.rename(output_file_name,output_file_name2)
     else:
         # get single filename
-        input_file = sys.argv[1]
+        input_file = filename
         # get filename without extension
         filename = input_file.split('/')[-1].split('.')[0]
         # output file name
-        output_file_name = f"{filename}T1.xml"
+        output_file_name = f"{filename}T.txml"
         process_file(
             input_file=input_file,
             output_file=output_file_name,
@@ -517,6 +511,37 @@ def main():
             symbols=symbols,
             fsa=fsa
         )
+        output_file_name2 = f"{filename}T.xml"
+        if os.path.isfile(output_file_name2):
+            os.remove(output_file_name2)
+        os.rename(output_file_name,output_file_name2)
+
+
+def main():
+    """
+    Purpose:
+        Entry point of program
+
+    Arguments:
+        None
+
+    Return:
+        None
+    """
+    # get cmd args
+    n = len(sys.argv)
+
+    try:
+        assert n == 2
+    except AssertionError:
+        print("Error: Missing or too many arguments")
+        print("Program should be run: ")
+        print("<program name> <source code>")
+        sys.exit()
+    # get filename
+    filename = sys.argv[1]
+
+    start_tokenize(filename=filename)
 
 if __name__ == "__main__":
     main()
