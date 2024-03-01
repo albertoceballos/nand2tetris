@@ -1,0 +1,30 @@
+class Test {
+    function int add(int a,int b){
+        return a+b;
+    }
+
+    method int gx(int a, int b){
+        return a + b;
+    }
+
+    function void main() {
+        var int a,b,c,d,f,h;
+        var Test t;
+        var int i;
+        let a = 1;
+        let b = 2;
+        let c = 3;
+        let d = 4;
+        let f = 5;
+        let h = 6;
+        let e = Test.new();
+        let i = a + ((add(d+c) + e.gx(a,b)) + f) + h;
+        return;
+    }
+}
+
+
+
+
+
+

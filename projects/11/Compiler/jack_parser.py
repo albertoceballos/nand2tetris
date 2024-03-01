@@ -6,6 +6,7 @@ This is based on the nand2tetris book
 import sys
 import os
 import xml.etree.ElementTree as ET
+from jack_code_gen import add_to_symbol_table, reset_symbol_table
 
 def write_tag(
     output_file,
@@ -160,6 +161,8 @@ def process_class(
     Return:
         current_index, token
     """
+    # reset class symbol table
+    reset_symbol_table(is_class_level=True)
     # write <class> tag
     write_tag(output_file=output_file,tag="class",is_closed=False)
 
@@ -185,6 +188,8 @@ def process_class(
 
     # write <identifer> className </identifier> token
     write_token(output_file=output_file,token=token)
+
+    class_name = token
 
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
@@ -223,7 +228,8 @@ def process_class(
             token=token,
             token_list=token_list,
             current_index=current_index,
-            input_file=input_file
+            input_file=input_file,
+            class_name=class_name
         )
 
     # verify if tag is class else raise Exception
@@ -246,7 +252,8 @@ def process_subroutine_declaration(
     token,
     token_list,
     current_index,
-    input_file
+    input_file,
+    class_name
 ):
     """
     Purpose:
@@ -272,6 +279,9 @@ def process_subroutine_declaration(
         input_file:
             input file path
 
+        class_name:
+            name of class
+
     Return:
         current_index and next token
     """
@@ -287,6 +297,14 @@ def process_subroutine_declaration(
         ],
         input_file=input_file
     )
+
+    if token['tag'] == 'keyword' and token['value'] == 'method':
+        add_to_symbol_table(
+            name="this",
+            id_type=class_name,
+            kind="argument",
+            is_class_level=False
+        )
 
     # write <keyword> constructor OR function OR method </keyword>
     write_token(output_file=output_file,token=token)
@@ -304,6 +322,7 @@ def process_subroutine_declaration(
         ],
         input_file=input_file
     )
+
 
     # write <keyword> void OR int OR char OR boolean </keyword>
     # OR <identifier> className </identifier>
@@ -1551,6 +1570,8 @@ def process_variable_declaration(
         input_file=input_file
     )
 
+    id_type = token['value']
+
     # write <keyword> int or boolean or char </keyword> OR <identifier> className </identifier>
     write_token(output_file=output_file,token=token)
 
@@ -1561,6 +1582,15 @@ def process_variable_declaration(
         actual_token=token,
         expected_tokens=[{'tag':'identifier'}],
         input_file=input_file
+    )
+
+    id_name = token['value']
+
+    add_to_symbol_table(
+        name=id_name,
+        id_type=id_type,
+        kind="local",
+        is_class_level=False
     )
 
     # write <identifier> varName </identifier>
@@ -1580,6 +1610,15 @@ def process_variable_declaration(
             actual_token=token,
             expected_tokens=[{'tag':'identifier'}],
             input_file=input_file
+        )
+
+        id_name = token['value']
+
+        add_to_symbol_table(
+            name=id_name,
+            id_type=id_type,
+            kind="local",
+            is_class_level=False
         )
 
         # write <identifier> varName </identifier>
@@ -1649,6 +1688,8 @@ def process_parameter_list(
         # write <keyword> data type </keyword> or <identifier> className </identifier> token
         write_token(output_file=output_file,token=token)
 
+        id_type = token['value']
+
         # get next token
         current_index, token = get_next_token(token_list=token_list,i=current_index)
 
@@ -1656,6 +1697,15 @@ def process_parameter_list(
             actual_token=token,
             expected_tokens=[{'tag':'identifier'}],
             input_file=input_file
+        )
+
+        id_name = token['value']
+
+        add_to_symbol_table(
+            name=id_name,
+            id_type=id_type,
+            kind="argument",
+            is_class_level=False
         )
 
         # write <identifier> argument Name </identifier>
@@ -1682,6 +1732,8 @@ def process_parameter_list(
                 input_file=input_file
             )
 
+            id_type = token['value']
+
             # write <keyword> data type </keyword> or <identifier> className </identifier> token
             write_token(output_file=output_file,token=token)
 
@@ -1692,6 +1744,15 @@ def process_parameter_list(
                 actual_token=token,
                 expected_tokens=[{'tag':'identifier'}],
                 input_file=input_file
+            )
+
+            id_name = token['value']
+
+            add_to_symbol_table(
+                name=id_name,
+                id_type=id_type,
+                kind="argument",
+                is_class_level=False
             )
 
             # write <identifier> argument Name </identifier>
@@ -1754,6 +1815,8 @@ def process_class_var_declaration(
         input_file=input_file
     )
 
+    kind = token['value']
+
     # write <keyword> static OR field </keyword>
     write_token(output_file=output_file,token=token)
 
@@ -1771,6 +1834,8 @@ def process_class_var_declaration(
         input_file=input_file
     )
 
+    id_type = token['value'].replace(" ","")
+
     # write <keyword> data  type </keyword> OR <identifier> className </identifier>
     write_token(output_file=output_file,token=token)
 
@@ -1783,11 +1848,20 @@ def process_class_var_declaration(
         input_file=input_file
     )
 
+    id_name = token['value'].replace(" ","")
+
     # write <identifier> identifier name </identifier>
     write_token(output_file=output_file,token=token)
 
     # get next token
     current_index, token = get_next_token(token_list=token_list,i=current_index)
+
+    add_to_symbol_table(
+        name=id_name,
+        id_type=id_type,
+        kind=kind,
+        is_class_level=True
+    )
 
     while token['tag'] == 'symbol' and token['value'] == ',':
         verify_token_type(
@@ -1805,6 +1879,15 @@ def process_class_var_declaration(
             actual_token=token,
             expected_tokens=[{'tag':'identifier'}],
             input_file=input_file
+        )
+
+        id_name = token['value'].replace(" ","")
+
+        add_to_symbol_table(
+            name=id_name,
+            id_type=id_type,
+            kind=kind,
+            is_class_level=True
         )
 
         # write <identifier> identifier name </identifier>
@@ -1842,7 +1925,6 @@ def generate_token_list(input_file):
     Return:
         None
     """
-    print(f"input_file={input_file}")
     tree = ET.parse(input_file)
 
     root = tree.getroot()
@@ -1929,7 +2011,7 @@ def start_parse(filename):
                 os.rename(output_file_name,output_file_name2)
     else:
         # get single filename
-        input_file = filename.replace(".jack","T.xml")
+        input_file = filename
         # get filename without extension
         filename = input_file.split('/')[-1].split('.')[0]
         
