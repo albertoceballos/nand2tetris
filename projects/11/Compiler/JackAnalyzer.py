@@ -21,15 +21,16 @@ def main():
         n = len(sys.argv)
 
         assert n == 2
+
+        # get filename
+        filename = sys.argv[1]
+
+        start_tokenize(filename=filename)
+        start_parse(filename=filename)
     except AssertionError:
         print("Error: Missing arguments")
         print("Program should be run as: <program name> <xml file or directory>")
         sys.exit()
-    # get filename
-    filename = sys.argv[1]
-
-    start_tokenize(filename=filename)
-    start_parse(filename=filename)
 
 if __name__ == "__main__":
     main()
