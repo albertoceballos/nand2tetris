@@ -6,16 +6,6 @@ the nand2tetris book
 
 import sys
 
-system_procedures = {}
-
-for e in ("Array","Keyboard","Output","Memory","Screen","Math","String","Sys"):
-    system_procedures[e] = {
-        "type": e,
-        "kind": "none",
-        "var_classification": "class",
-        "num": -1
-    }
-
 class_symbol_table = {}
 function_symbol_table = {}
 
@@ -238,7 +228,7 @@ def write_label(
         assert label_id >= 0
 
         if label_type == "label":
-            write_code(f"L{label_id}")
+            write_code(f"label L{label_id}")
         elif label_type == "goto":
             write_code(f"goto L{label_id}")
         else:
@@ -336,12 +326,16 @@ def reset_symbol_table(
     """
     try:
         assert isinstance(is_class_level,bool)
-        global class_symbol_table
-        global function_symbol_table
+        global class_symbol_table, field_count, static_count
+        global function_symbol_table, local_count, arg_count
         if is_class_level is True:
             class_symbol_table = {}
+            static_count = 0
+            field_count = 0
         elif is_class_level is False:
             function_symbol_table = {}
+            local_count = 0
+            arg_count = 0
     except AssertionError:
         print("Invalid arguments")
         print(f"is_class_level = {is_class_level}")
@@ -359,24 +353,22 @@ def get_symbol_from_table(name):
     Return:
         variable name
     """
-    global function_symbol_table, class_symbol_table, system_procedures
+    global function_symbol_table, class_symbol_table
     try:
         print(class_symbol_table)
         assert isinstance(name,str)
-        assert name in function_symbol_table or name in class_symbol_table or name in system_procedures
-        if name in system_procedures:
-            return system_procedures[name]
         if name in function_symbol_table:
             return function_symbol_table[name]
         elif name in class_symbol_table:
             return class_symbol_table[name]
+        else:
+            return None
     except AssertionError:
         print("get_symbol_from_table()")
-        print("Error: Invalid argument OR symbol not found")
+        print("Error: Invalid argument")
         print(f"name={name}")
         sys.exit()
     
-
 def add_to_symbol_table(
     name,
     id_type,
@@ -411,10 +403,8 @@ def add_to_symbol_table(
         var_classification : str
             variable classification
             it can be:
-                - variable
                 - object
-                - function
-                - method
+                - variable
                 - class
 
         is_class_level : bool
@@ -432,7 +422,7 @@ def add_to_symbol_table(
         assert isinstance(id_type,str)
         assert isinstance(kind,str)
         assert isinstance(var_classification,str)
-        assert kind in ("field","static","argument","local","none")
+        assert kind in ("field","static","arg","local","none")
         assert var_classification in ("variable","object","function","method","class")
         assert isinstance(is_class_level,bool)
 
@@ -458,7 +448,7 @@ def add_to_symbol_table(
                 static_count += 1
         else:
             assert name not in function_symbol_table
-            assert kind == "argument" or kind == "local"
+            assert kind == "arg" or kind == "local"
             if kind == "local":
                 function_symbol_table[name] = {
                     "type": id_type,
@@ -467,7 +457,7 @@ def add_to_symbol_table(
                     "num": local_count
                 }
                 local_count += 1
-            elif kind == "argument":
+            elif kind == "arg":
                 function_symbol_table[name] = {
                     "type": id_type,
                     "kind": kind,

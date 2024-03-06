@@ -254,7 +254,7 @@ def process_subroutine_declaration():
         add_to_symbol_table(
             name="this",
             id_type=class_name,
-            kind="argument",
+            kind="arg",
             var_classification="object",
             is_class_level=False
         )
@@ -279,8 +279,6 @@ def process_subroutine_declaration():
     # OR <identifier> className </identifier>
     write_token()
 
-    id_type = token['value'].replace(" ","")
-
     # get next token
     current_index, token = get_next_token(i=current_index)
 
@@ -290,16 +288,6 @@ def process_subroutine_declaration():
     write_token()
 
     sub_name = token['value'].replace(" ","")
-
-    var_classification = "method" if sub_type in ("constructor","method") else "function"
-
-    add_to_symbol_table(
-        name=sub_name,
-        id_type=id_type,
-        kind="none",
-        var_classification=var_classification,
-        is_class_level=True
-    )
 
     # get next token
     current_index, token = get_next_token(i=current_index)
@@ -532,8 +520,8 @@ def process_if_statement():
 
     verify_token_type(expected_tokens=[{'tag':'symbol','value':'{'}])
 
-    # negate expression
-    write_arithmetic_op(op="neg")
+    # not expression
+    write_arithmetic_op(op="not")
 
     # get labels
     label_n = get_label()
@@ -775,6 +763,8 @@ def process_let_statement():
         write_push_pop(segment='pointer',index=1,is_push=False)
         write_push_pop(segment='that',index=0,is_push=False)
     else:
+        var = get_symbol_from_table(name=id_name)
+        seg = "this" if var['kind'] == 'field' else var['kind']
         write_push_pop(segment=seg,index=var['num'],is_push=False)
 
 def process_expression():
@@ -887,7 +877,7 @@ def process_term():
         if token['value'] == 'this':
             write_push_pop(segment="pointer",index=0,is_push=True)
         else:
-            write_push_pop(segment="constant",index=0,is_push=True)
+            write_push_pop(segment="const",index=0,is_push=True)
 
             if token['value'] == "true":
                 write_arithmetic_op(op="not")
@@ -942,6 +932,8 @@ def process_term():
             current_index=next_index
     # check if dealing with unaryOp (- or ~)
     elif token['tag'] == 'symbol' and (token['value'] == '-' or token['value'] == '~'):
+        op_val = token['value'].replace(" ","")
+        
         # write <symbol> ~ OR - </symbol>
         write_token()
 
@@ -949,7 +941,7 @@ def process_term():
 
         process_term()
 
-        if token['value'] == '-':
+        if op_val == '-':
             write_arithmetic_op(op="neg")
         else:
             write_arithmetic_op(op="not")
@@ -1031,7 +1023,9 @@ def process_subroutine_call():
 
         subproc_name = token['value'].replace(" ","")
 
-        if proc_var['var_classification'] == 'class':
+        print(f"proc_var = {proc_var}")
+
+        if proc_var is None:
             fun_name = f"{proc_name}.{subproc_name}"
         elif proc_var['var_classification'] == 'object':
             fun_name = f"{proc_var['id_type']}.{subproc_name}"
@@ -1053,8 +1047,9 @@ def process_subroutine_call():
 
         num_args = process_expression_list()
 
-        if proc_var['var_classification'] == 'object':
-            num_args += 1
+        if proc_var is not None:
+            if proc_var['var_classification'] == 'object':
+                num_args += 1
 
         verify_token_type(expected_tokens=[{'tag':'symbol','value':')'}])
 
@@ -1262,7 +1257,7 @@ def process_parameter_list():
         add_to_symbol_table(
             name=id_name,
             id_type=id_type,
-            kind="argument",
+            kind="arg",
             var_classification=var_classification,
             is_class_level=False
         )
@@ -1309,7 +1304,7 @@ def process_parameter_list():
             add_to_symbol_table(
                 name=id_name,
                 id_type=id_type,
-                kind="argument",
+                kind="arg",
                 var_classification=var_classification,
                 is_class_level=False
             )
