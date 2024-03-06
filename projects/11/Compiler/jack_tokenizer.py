@@ -54,8 +54,8 @@ def process_input(
         navigate to next state in FSA using input "c" which is current character
 
     Arguments:
-        c : str
-            character to input into FSA
+        c : int
+            character encoded as ascii value to input into FSA
 
         current_state : str
             current state of FSA
@@ -63,7 +63,7 @@ def process_input(
         new state: str
     """
     try:
-        assert isinstance(c,str)
+        assert isinstance(c,int)
         assert isinstance(current_state,str)
         # check if input "c" exists as transition in current state of FSA
         if c in fsa[current_state].keys():
@@ -77,7 +77,7 @@ def process_input(
         print("Error: invalid argument")
         print(f"c = {c}")
         print(f"current_state = {current_state}")
-        sys.exit()    
+        sys.exit()
 
 def write_token(
     token,
@@ -177,25 +177,25 @@ def process_file(
         Process file
 
     Arguments:
-        input_file:
+        input_file : str
             input file path
 
-        output_file:
+        output_file : str
             output file path
 
-        keyword_set:
-            set of keywords (string)
+        keyword_set : set
+            set of keywords
 
-        symbols:
-            set of symbols (string)
+        symbols : set
+            set of symbols
     Return:
         None
     """
     try:
         assert isinstance(input_file,str)
         assert isinstance(output_file,str)
-        assert isinstance(keyword_set,str)
-        assert isinstance(symbols,str)
+        assert isinstance(keyword_set,set)
+        assert isinstance(symbols,set)
         # current state flag
         current_state = "start"
         # identifier name (used to determine variable names, keywords, symbols)
@@ -437,6 +437,7 @@ def generate_fsa(symbols):
                 ord(";"): "done",
                 ord(")"): "done",
                 ord(","): "done",
+                ord(" "): "done",
                 "else": "error"
             },
             # string state
@@ -476,6 +477,7 @@ def generate_fsa(symbols):
 
         return fsa
     except AssertionError:
+        print("generate_fsa()")
         print("Error: invalid argument")
         print(f"symbols = {symbols}")
         sys.exit()
@@ -571,6 +573,7 @@ def start_tokenize(filename):
                 os.remove(output_file_name2)
             os.rename(output_file_name,output_file_name2)
     except AssertionError:
+        print("start_tokenize()")
         print("Error: Invalid arguments")
         print(f"filename = {filename}")
         sys.exit()

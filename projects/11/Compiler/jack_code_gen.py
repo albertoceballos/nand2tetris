@@ -6,6 +6,16 @@ the nand2tetris book
 
 import sys
 
+system_procedures = {}
+
+for e in ("Array","Keyboard","Output","Memory","Screen","Math","String","Sys"):
+    system_procedures[e] = {
+        "type": e,
+        "kind": "none",
+        "var_classification": "class",
+        "num": -1
+    }
+
 class_symbol_table = {}
 function_symbol_table = {}
 
@@ -17,6 +27,55 @@ output_file = ""
 label_count = 0
 
 class_name = ""
+
+def get_var_count(var_type):
+    """
+    Purpose:
+        Get variable count
+
+    Argument:
+        var_type : str
+            type of variable
+
+    Return:
+        count of type of varibale
+    """
+    try:
+        assert isinstance(var_type,str)
+        assert var_type in ("field","static","arg","local")
+
+        if var_type == "field":
+            return field_count
+        elif var_type == "static":
+            return static_count
+        elif var_type == "arg":
+            return arg_count
+        elif var_type == "local_count":
+            return local_count
+    except AssertionError:
+        print("Error: Invalid arguments")
+        print(f"var_type = {var_type}")
+        sys.exit()
+
+def set_output_file_code_gen(file_name):
+    """
+    Purpose:
+        set output file name
+    
+    Arguments:
+        file_name : str
+            filename
+
+    Return:
+        None
+    """
+    try:
+        global output_file
+        output_file = file_name
+    except AssertionError:
+        print("Error: invalid arguments")
+        print(f"file_name = {file_name}")
+        sys.exit()
 
 def get_class_name():
     """
@@ -88,12 +147,16 @@ def write_push_pop(
         assert segment in ("const","arg","local","static","this","that","pointer","temp")
         assert isinstance(index,int)
         assert index >= 0
-        segment = segment.upper()
+        if segment == 'const':
+            segment = "constant"
+        elif segment == 'arg':
+            segment = "argument"
         if is_push is True:
             write_code(code=f"push {segment} {index}")
         else:
             write_code(code=f"pop {segment} {index}")
     except AssertionError:
+        print("write_push_pop")
         print("Error: Received invalid arguments")
         print(f"segment = {segment}")
         print(f"index = {index}")
@@ -126,7 +189,8 @@ def write_arithmetic_op(op):
         assert op in ("add","sub","neg","eq","gt","lt","and","or","not")
         write_code(f"{op}")
     except AssertionError:
-        print("Invalid operation")
+        print("write_arithmetic_op()")
+        print("Error: Invalid operation")
         print(f"operation = {op}")
         sys.exit()
 
@@ -271,7 +335,7 @@ def reset_symbol_table(
         None
     """
     try:
-        assert isinstance(isinstance,bool)
+        assert isinstance(is_class_level,bool)
         global class_symbol_table
         global function_symbol_table
         if is_class_level is True:
@@ -295,16 +359,20 @@ def get_symbol_from_table(name):
     Return:
         variable name
     """
+    global function_symbol_table, class_symbol_table, system_procedures
     try:
+        print(class_symbol_table)
         assert isinstance(name,str)
-        assert name in function_symbol_table or name in class_symbol_table
+        assert name in function_symbol_table or name in class_symbol_table or name in system_procedures
+        if name in system_procedures:
+            return system_procedures[name]
         if name in function_symbol_table:
             return function_symbol_table[name]
         elif name in class_symbol_table:
             return class_symbol_table[name]
     except AssertionError:
-        print("Error: ")
-        print("Invalid argument OR symbol not found")
+        print("get_symbol_from_table()")
+        print("Error: Invalid argument OR symbol not found")
         print(f"name={name}")
         sys.exit()
     
@@ -370,7 +438,7 @@ def add_to_symbol_table(
 
         if is_class_level:
             assert name not in class_symbol_table
-            assert kind == "field" or kind == "static"
+            assert kind == "field" or kind == "static" or kind == "none"
 
             if kind == "field":
                 class_symbol_table[name] = {
@@ -421,3 +489,37 @@ def add_to_symbol_table(
         print(f"local count:  {local_count}")
         print(f"Symbol table: {t}")
         sys.exit()
+
+def write_function_dec(fun_name):
+    """
+    Purpose:
+        write function declaration
+
+    Argument:
+        fun_name : str
+            function name
+
+    Return:
+        None
+    """
+    global local_count
+    try:
+        assert isinstance(fun_name,str)
+        write_code(code=f"function {fun_name} {local_count}")
+    except AssertionError:
+        print("Error: Invalid arguments")
+        print(f"fun_name = {fun_name}")
+        sys.exit()
+
+def write_return():
+    """
+    Purpose:
+        Write return
+
+    Arguments:
+        None
+
+    Return:
+        None
+    """
+    write_code(code="return")

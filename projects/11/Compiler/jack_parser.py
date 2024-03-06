@@ -8,9 +8,9 @@ import os
 import xml.etree.ElementTree as ET
 from jack_code_gen import add_to_symbol_table, reset_symbol_table, \
     write_arithmetic_op, write_label, \
-    write_function_call, \
+    write_function_call,set_output_file_code_gen, \
     write_push_pop, get_label, \
-    get_symbol_from_table, get_class_name, set_class_name
+    get_symbol_from_table, get_class_name, set_class_name, write_function_dec,write_return,get_var_count
 
 output_file = ""
 current_index = -1
@@ -322,48 +322,71 @@ def process_subroutine_declaration():
     # get next token
     current_index, token = get_next_token(i=current_index)
 
-    process_subroutine_body()
+    process_subroutine_body(sub_name=sub_name,sub_type=sub_type)
 
     # write </subroutineDec>
     write_tag(tag="subroutineDec",is_closed=True)
 
-def process_subroutine_body():
+def process_subroutine_body(sub_name,sub_type):
     """
     Purpose:
         process subroutine body
     Arguments:
-        None
+        sub_name : str
+            subroutine name
+
+        sub_type : str
+            subroutine type
     Return:
         None
     """
     global token, current_index
+    try:
+        assert isinstance(sub_name,str)
+        verify_token_and_current_index()
+        # write <subroutineBody>
+        write_tag(tag="subroutineBody",is_closed=False)
 
-    verify_token_and_current_index()
-    # write <subroutineBody>
-    write_tag(tag="subroutineBody",is_closed=False)
+        verify_token_type(expected_tokens=[{'tag':'symbol','value':'{'}])
 
-    verify_token_type(expected_tokens=[{'tag':'symbol','value':'{'}])
+        # write <symbol> { </symbol>
+        write_token()
 
-    # write <symbol> { </symbol>
-    write_token()
+        # get next token
+        current_index, token = get_next_token(i=current_index)
 
-    # get next token
-    current_index, token = get_next_token(i=current_index)
+        while token['tag'] == 'keyword' and token['value'] == 'var':
+            process_variable_declaration()
 
-    while token['tag'] == 'keyword' and token['value'] == 'var':
-        process_variable_declaration()
+        class_name = get_class_name()
+        fun_name = f"{class_name}.{sub_name}"
 
-    process_statements()
+        write_function_dec(fun_name=fun_name)
 
-    verify_token_type(expected_tokens=[{'tag':'symbol','value':'}'}])
+        if sub_type == "constructor":
+            num_fields = get_var_count(var_type="fields")
+            write_push_pop(segment="const",index=num_fields,is_push=True)
+            write_function_call(function_name="Memory.alloc",num_args=1)
+            write_push_pop(segment="pointer",index=0,is_push=False)
+        elif sub_type == "method":
+            write_push_pop(segment="arg",index=0,is_push=True)
+            write_push_pop(segment="pointer",index=0,is_push=False)        
 
-    # write <symbol> } </symbol>
-    write_token()
+        process_statements()
 
-    current_index, token = get_next_token(i=current_index)
+        verify_token_type(expected_tokens=[{'tag':'symbol','value':'}'}])
 
-    # write </subroutineBody>
-    write_tag(tag="subroutineBody",is_closed=True)
+        # write <symbol> } </symbol>
+        write_token()
+
+        current_index, token = get_next_token(i=current_index)
+
+        # write </subroutineBody>
+        write_tag(tag="subroutineBody",is_closed=True)
+    except AssertionError:
+        print("Error: Invalid argument")
+        print(f"sub_name = {sub_name}")
+        sys.exit()
 
 def process_statements():
     """
@@ -594,6 +617,8 @@ def process_do_statement():
 
     current_index, token = get_next_token(i=current_index)
 
+    write_push_pop(segment="temp",index=0,is_push=False)
+
     # write </doStatement>
     write_tag(tag="doStatement",is_closed=True)
 
@@ -648,7 +673,11 @@ def process_return_statement():
     token['tag'] == 'identifier' or \
     token['tag'] == 'symbol' and (token['value'] == '-' or token['value'] == '~') or \
     token['tag'] == 'symbol' and token['value'] == '(':
-        current_index, token = process_expression()
+        process_expression()
+    else:
+        write_push_pop(segment='const',index=0,is_push=True)
+
+    write_return()
 
     verify_token_type(expected_tokens=[{'tag':'symbol','value':';'}])
 
@@ -685,17 +714,15 @@ def process_let_statement():
 
     verify_token_type(expected_tokens=[{'tag':'identifier'}])
 
-    var = get_symbol_from_table(name=token['value'].replace(" ",""))
-
-    seg = "this" if var['kind'] == 'field' else var['kind']
-
-    write_push_pop(segment=seg,index=var['num'],is_push=False)
+    id_name = token['value'].replace(" ","")
 
     # write <identifier> varName </identifier>
     write_token()
 
     # get next token
     current_index, token = get_next_token(i=current_index)
+
+    is_array = token['value'] == '['
 
     if token['tag'] == 'symbol' and token['value'] == '[':
         # write <symbol> [ </symbol>
@@ -708,11 +735,19 @@ def process_let_statement():
 
         verify_token_type(expected_tokens=[{'tag':'symbol','value':']'}])
 
+        var = get_symbol_from_table(name=id_name)
+
+        seg = "this" if var['kind'] == 'field' else var['kind']
+
+        write_push_pop(segment=seg,index=var['num'],is_push=False)
+
         # write <symbol> ] </symbol>
         write_token()
 
-        current_index, token = get_next_token(i=current_index)
+        write_arithmetic_op(op="add")
+        write_push_pop(segment="temp",index=0,is_push=False)
 
+        current_index, token = get_next_token(i=current_index)
 
     verify_token_type(expected_tokens=[{'tag':'symbol','value':'='}])
 
@@ -734,6 +769,13 @@ def process_let_statement():
 
     # write </letStatement>
     write_tag(tag="letStatement",is_closed=True)
+
+    if is_array:
+        write_push_pop(segment='temp',index=0,is_push=True)
+        write_push_pop(segment='pointer',index=1,is_push=False)
+        write_push_pop(segment='that',index=0,is_push=False)
+    else:
+        write_push_pop(segment=seg,index=var['num'],is_push=False)
 
 def process_expression():
     """
@@ -762,6 +804,21 @@ def process_expression():
         token['value'] == '<' or token['value'] == '>' or \
         token['value'] == '='):
         op = token['value'].replace(" ","")
+        if op == '+':
+            op = 'add'
+        elif op == '-':
+            op = 'sub'
+        elif op == '&':
+            op = 'and'
+        elif op == '|':
+            op = 'or'
+        elif op == '<':
+            op = 'lt'
+        elif op == '>':
+            op = 'gt'
+        elif op == '=':
+            op = 'eq'
+        print(f"op = {op}")
 
         # write operator
         write_token()
@@ -780,8 +837,6 @@ def process_expression():
     
     # write </expression>
     write_tag(tag="expression",is_closed=True)
-
-    return current_index, token
 
 def process_term():
     """
@@ -803,10 +858,10 @@ def process_term():
         # write <integerConstant> int constant </integerConstant>
         write_token()
 
-        current_index, token = get_next_token(i=current_index)
-
         # write push const n
-        write_push_pop(segment="const",index=token,is_push=True)
+        write_push_pop(segment="const",index=int(token['value']),is_push=True)
+
+        current_index, token = get_next_token(i=current_index)        
     elif token['tag'] == 'stringConstant':
         # write <stringConstant> string constant </stringConstant>
         write_token()
@@ -998,7 +1053,8 @@ def process_subroutine_call():
 
         num_args = process_expression_list()
 
-        num_args += 1
+        if proc_var['var_classification'] == 'object':
+            num_args += 1
 
         verify_token_type(expected_tokens=[{'tag':'symbol','value':')'}])
 
@@ -1045,7 +1101,7 @@ def process_expression_list():
         # write </expressionList>
         write_tag(tag="expressionList",is_closed=True)
 
-        return current_index, token, num_args
+        return num_args
 
     process_expression()
 
@@ -1479,6 +1535,8 @@ def start_parse(filename):
                     current_index = -1
                     current_index, token = get_next_token(i=current_index)
                     output_file = output_file_name
+                    output_file_name3 = f"{dir_name}/{original_name}.vm"
+                    set_output_file_code_gen(file_name=output_file_name3)
                     process_class()
 
                     output_file_name2 = os.path.join(dir_name,f"{original_name}.xml")
@@ -1494,6 +1552,8 @@ def start_parse(filename):
             filename = filename[0:len(filename)-1]
             original_name = filename
             output_file_name = f"{filename}.pxml"
+            output_file_name3 = f"{dir_name}/{original_name}.vm"
+            set_output_file_code_gen(file_name=output_file_name3)
             generate_token_list()
             current_index = -1
             current_index, token = get_next_token(i=current_index)
