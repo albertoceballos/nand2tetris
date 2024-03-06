@@ -727,11 +727,11 @@ def process_let_statement():
 
         seg = "this" if var['kind'] == 'field' else var['kind']
 
-        write_push_pop(segment=seg,index=var['num'],is_push=False)
+        #write_push_pop(segment=seg,index=var['num'],is_push=False)
 
         # write <symbol> ] </symbol>
         write_token()
-
+        write_push_pop(segment=seg,index=var['num'],is_push=True)
         write_arithmetic_op(op="add")
         write_push_pop(segment="temp",index=0,is_push=False)
 
@@ -856,16 +856,16 @@ def process_term():
         # write <stringConstant> string constant </stringConstant>
         write_token()
 
+        s = token['value']
+
         current_index, token = get_next_token(i=current_index)
 
-        s = token['value'].replace(" ","")
-
-        write_push_pop(segment="constant",index=len(s),is_push=True)
+        write_push_pop(segment="const",index=len(s),is_push=True)
         
         write_function_call("String.new",1)
 
         for ch in s:
-            write_push_pop(segment="constant",index=ord(ch),is_push=True)
+            write_push_pop(segment="const",index=ord(ch),is_push=True)
             write_function_call(function_name="String.appendChar",num_args=2)
 
     elif token['tag'] == 'keyword' and \
