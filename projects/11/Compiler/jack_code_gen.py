@@ -355,7 +355,7 @@ def get_symbol_from_table(name):
     """
     global function_symbol_table, class_symbol_table
     try:
-        print(class_symbol_table)
+        #print(class_symbol_table)
         assert isinstance(name,str)
         if name in function_symbol_table:
             return function_symbol_table[name]

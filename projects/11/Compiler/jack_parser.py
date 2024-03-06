@@ -352,7 +352,7 @@ def process_subroutine_body(sub_name,sub_type):
         write_function_dec(fun_name=fun_name)
 
         if sub_type == "constructor":
-            num_fields = get_var_count(var_type="fields")
+            num_fields = get_var_count(var_type="field")
             write_push_pop(segment="const",index=num_fields,is_push=True)
             write_function_call(function_name="Memory.alloc",num_args=1)
             write_push_pop(segment="pointer",index=0,is_push=False)
@@ -808,7 +808,7 @@ def process_expression():
             op = 'gt'
         elif op == '=':
             op = 'eq'
-        print(f"op = {op}")
+        #print(f"op = {op}")
 
         # write operator
         write_token()
@@ -1023,12 +1023,12 @@ def process_subroutine_call():
 
         subproc_name = token['value'].replace(" ","")
 
-        print(f"proc_var = {proc_var}")
+        #print(f"proc_var = {proc_var}")
 
         if proc_var is None:
             fun_name = f"{proc_name}.{subproc_name}"
         elif proc_var['var_classification'] == 'object':
-            fun_name = f"{proc_var['id_type']}.{subproc_name}"
+            fun_name = f"{proc_var['type']}.{subproc_name}"
             kind = "this" if proc_var['kind'] == 'field' else proc_var['kind']
             write_push_pop(segment=kind,index=proc_var['num'],is_push=True)
 
@@ -1543,11 +1543,14 @@ def start_parse(filename):
             input_file = filename
             # get filename without extension
             filename = input_file.split('/')[-1].split('.')[0]
+            #print(f"filename = {filename}")
             # output file name
-            filename = filename[0:len(filename)-1]
+            input_file = f"{filename}T.xml"
+            #print(f"input_file = {input_file}")
             original_name = filename
+            #print(f"original_name = {original_name}")
             output_file_name = f"{filename}.pxml"
-            output_file_name3 = f"{dir_name}/{original_name}.vm"
+            output_file_name3 = f"{original_name}.vm"
             set_output_file_code_gen(file_name=output_file_name3)
             generate_token_list()
             current_index = -1
