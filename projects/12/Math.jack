@@ -10,11 +10,43 @@
  *  using calls to OS functions in this class.
  */
 class Math {
-    static int n;             // Number of bits used for representing a two's complement integer
-    static Array powersOfTwo; // Stores 2^0, 2^1, 2^2,..., 2^(n-1)
-
+    static Array powTwo;
     // Initializes the Math library.
     function void init() {
+        let powTwo = Array.new(16);
+        let powTwo[0] = 1;
+		let powTwo[1] = 2;
+		let powTwo[2] = 4;
+		let powTwo[3] = 8;
+		let powTwo[4] = 16;
+		let powTwo[5] = 32;
+		let powTwo[6] = 64;
+		let powTwo[7] = 128;
+		let powTwo[8] = 256;
+		let powTwo[9] = 512;
+		let powTwo[10] = 1024;
+		let powTwo[11] = 2048;
+		let powTwo[12] = 4096;
+		let powTwo[13] = 8192;
+		let powTwo[14] = 16384;
+		let powTwo[15] = 16384 + 16384;
+        return;
+    }
+
+    function boolean check_bit_at_position(int x, int j){
+        var int e, i;
+        // compute 2^j
+        let e = 1;
+        let i = 0;
+        while(i < j){
+            let e = e + e;
+            let i = i + 1;
+        }
+        if((x & e) = 0){
+            return false;
+        }else{
+            return true;
+        }
     }
 
     /** Returns the product of x and y. 
@@ -23,6 +55,23 @@ class Math {
      *  Thus, in Jack, x * y and Math.multiply(x,y) return the same value.
      */
     function int multiply(int x, int y) {
+        var int sum, shifted_x, t;
+
+        if(x = 0 | y = 0){
+            return 0;
+        }
+        let sum = 0;
+        let shifted_x = x;
+
+        let t = 0;
+        while(t < 16){
+            if(Math.check_bit_at_position(y,t) = true){
+                let sum = sum + shifted_x;
+            }
+            let shifted_x = shifted_x + shifted_x;
+            let t = t + 1;
+        }
+        return sum;
     }
 
     /** Returns the integer part of x / y.
@@ -31,25 +80,90 @@ class Math {
      *  Thus, x/y and Math.divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
+        var int q;
+        var boolean negative;
+        let negative = (x < 0) | (y < 0);
+        let x = Math.abs(x);
+        let y = Math.abs(y);
+        if(y > x | y < 0){
+            return 0;
+        }
+
+        // x / 2*y
+        let q = Math.divide(x,y+y);
+        if(x - ((q+q) *y) < y){
+            if(negative){
+                return -(q+q);
+            }
+            return (q+q);
+        }else{
+            if(negative){
+                return -(q+q + 1);
+            }
+            return q+q + 1;
+        }
+    }
+
+    // Returns the remainder of dividing x by y
+    function int remainder(int x, int y){
+        var int t;
+        if(y > x){
+            return x;
+        }
+        let t = x - y;
+        while(t > y){
+            let t = x - y;
+        }
+        return t;
     }
 
     /** Returns the integer part of the square root of x.
     */
     function int sqrt(int x) {
+        var int y, n,t;
+        let y = 0;
+        // number of bits
+        let n = 7; // 16/2 - 1
+
+        while(n > -1){
+            // 2^n = powTwo[n]
+            let t = powTwo[n];
+            let t = t + y;
+            let t = t * t;
+            if(~(t>x) & t > 0){
+                let y = y + powTwo[n];
+            }
+            let n = n - 1;
+        }
+        return y;
     }
 
     /** Returns the greater value.
     */
     function int max(int a, int b) {
+        if(a > b){
+            return a;
+        }else{
+            return b;
+        }
     }
 
     /** Returns the smaller value.
     */
     function int min(int a, int b) {
+        if(a < b){
+            return a;
+        }else{
+            return b;
+        }
     }
 
     /** Returns the absolute value of x
     */
     function int abs(int x) {
+        if(x < 0){
+            return -x;
+        }
+        return x;
     }
 }

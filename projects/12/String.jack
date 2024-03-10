@@ -11,54 +11,143 @@
  * string-oriented operations.
  */
 class String {
-
+    field int length, max_length;
+    field Array str;
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        let length = 0;
+        if(maxLength = 0){
+            let maxLength = 1;
+        }
+        let max_length = maxLength;
+        let str = Array.new(maxLength);
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        do str.dispose();
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return length;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return str[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        let str[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        if(length < max_length){
+            let str[length] = c;
+            let length = length + 1;
+        }
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        if(length > 0){
+            let length = length - 1;
+        }
+        return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
+        var boolean is_negative;
+        var int start, sum;
+
+        let is_negative = false;
+        let start = 0;
+        let sum = 0;
+
+        // check for -
+        if(str[0] = 45){
+            let is_negative = true;
+            let start = 1;
+        }
+        while(start < length){
+            let sum = sum + ((str[start] - 48) * String.pow(10,length-start-1));
+            let start = start + 1;
+        }
+        return sum;
+    }
+
+    function int pow(int base, int exp){
+        var int i;
+        var int sum;
+        if(exp = 0){
+            return 1;
+        }
+        let i =0;
+        let sum = 1;
+        while(i < exp){
+            let sum = sum * base;
+            let i = i + 1;
+        }
+        return sum;
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        var int x;
+        var int digit, m;
+        var boolean has_written;
+        let x = 0;
+        if(val = 0){
+            let str[0] = 48;
+            let length = 1;
+            return;
+        }
+        if(val < 0){
+            let str[x] = 45;
+            let x = x + 1;
+            let val = -val;
+        }
+        let m = 10000;
+
+        while(m > 0){
+            let digit = Math.divide(val,m);
+            // val = val % m;
+            let val = val - ((val/m)*m);
+            if(~(has_written) & digit > 0){
+                let has_written = true;
+            }
+            if(has_written){
+                let str[x] = digit + 48;
+                let x = x + 1;
+            }
+            let m = Math.divide(m,10);
+        }
+        let length = x;
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
