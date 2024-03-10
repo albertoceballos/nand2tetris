@@ -72,83 +72,142 @@ class Screen {
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
-        var int temp;
         var int dx, dy;
-        var int a, b;
-        var int t1, t2;
-        let a = 0;
-        let b = 0;
-        if((x1>x2) & (y1>y2))
-		{
-			let temp = x1;
-			let x1 = x2;
-			let x2=temp;
-			let temp=y1;
-			let y1=y2;
-			let y2=y1;
-		}
-		if((y1>y2) & (x1<x2))
-		{
-			let temp = x1;
-			let x1 = x2;
-			let x2=temp;
-			let temp=y1;
-			let y1=y2;
-			let y2=y1;
-		}
+
         let dx = x2-x1;
         let dy = y2-y1;
-        // vertical line
-        if(dx = 0){
-            do Screen.drawPixel(x1,y1);
-            while(~(b=dy)){
-                if(dy < 0){
-                    let b = b - 1;
-                }else{
-                    let b = b + 1;
-                }
-                do Screen.drawPixel(x1,y1+b);
-            }
-        }
-        // horizontal line
+
         if(dy = 0){
-            do Screen.drawPixel(x1,y1);
-            while(~(a=dx)){
-                if(dx < 0){
-                    let a = a - 1;
-                }else{
-                    let a = a + 1;
-                }
-                do Screen.drawPixel(x1+a,y1);
+            do Screen.drawHorizontalLine(x1,y1,x2,y2);
+            return;
+        }
+        if(dx = 0){
+            do Screen.drawVerticalLine(x1,y1,x2,y2);
+            return;
+        }
+
+        if(dx > 0 & dy > 0){
+            do Screen.drawDownRightDiagonal(x1,y1,x2,y2);
+            return;
+        }
+    
+        if(dx < 0 & dy < 0){
+            do Screen.drawDownRightDiagonal(x1,y1,x2,y2);
+            return;
+        }
+
+        if(dx > 0 & dy < 0){
+            do Screen.drawUpRightDiagonal(x1,y1,x2,y2);
+            return;
+        }
+
+        if(dx < 0 & dy > 0){
+            do Screen.drawUpRightDiagonal(x1,y1,x2,y2);
+            return;
+        }
+
+        return;
+    }
+
+    function void drawUpRightDiagonal(int x1, int y1, int x2, int y2){
+        var int dx, dy, a, b, diff, temp,t;
+
+        if(x1 > x2){
+            let temp = x1;
+            let x1 = x2;
+            let x2 = temp;
+            let temp = y1;
+            let y1 = y2;
+            let y2 = temp;
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let a = 0;
+        let b = 0;
+        let t = Math.abs(dy);
+        let diff = 0;
+
+        while(~(a>dx) & ~(b>t)){
+            do Screen.drawPixel(x1+a,y1-b);
+            if(diff > 0){
+                let a = a + 1;
+                let diff = diff + dy;
+            }else{
+                let b = b + 1;
+                let diff = diff + dx;
             }
         }
-        // draw line south east
-        if((dx > 0) & (dy > 0)){
-            let t1 = 0;
-            while(~(a>dx) & ~(b>dy)){
-                do Screen.drawPixel(x1+a,y1+b);
-                if(t1 < 0){
-                    let a = a + 1;
-                    let t1 = t1 + dy;
-                }else{
-                    let b = b + 1;
-                    let t1 = t1 - dx;
-                }
+
+        return;
+    }
+
+    function void drawDownRightDiagonal(int x1, int y1, int x2, int y2){
+        var int dx, dy, a, b, diff, temp;
+
+        if(x1 > x2){
+            let temp = x1;
+            let x1 = x2;
+            let x2 = temp;
+            let temp = y1;
+            let y1 = y2;
+            let y2 = temp;
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let a = 0;
+        let b = 0;
+        let diff = 0;
+        while(~(a>dx) & ~(b>dy)){
+            do Screen.drawPixel(x1+a,y1+b);
+            if(diff < 0){
+                let a = a + 1;
+                let diff = diff + dy;
+            }else{
+                let b = b + 1;
+                let diff = diff - dx;
             }
         }
-        // draw line south west
-        if((dx < 0) & (dy > 0)){
-            let t2 = 0;
-            while(~(a<dx) & ~(b>dy)){
-                do Screen.drawPixel(x1+a,y1+b);
-                if(t2 > 0){
-                    let a = a - 1;
-                    let t2 = t2 - dy;
-                }else{
-                    let b = b + 1;
-                    let t2 = t2 + dx;
-                }
-            }
+        return;
+    }
+
+    function void drawVerticalLine(int x1, int y1, int x2, int y2){
+        var int a, temp,dy;
+        let a = 0;
+
+        if(y1 > y2){
+            let temp = y1;
+            let y1 = y2;
+            let y2 = temp;
+        }
+
+        let dy = y2-y1;
+
+        do Screen.drawPixel(x1,y1);
+        while(~(a=dy)){
+            let a = a + 1;
+            do Screen.drawPixel(x1,y1+a);
+        }
+        return;
+    }
+
+    function void drawHorizontalLine(int x1, int y1, int x2, int y2){
+        var int a, temp,dx;
+        let a = 0;
+
+        if(x1 > x2){
+            let temp = x1;
+            let x1 = x2;
+            let x2 = temp;
+        }
+
+        let dx = x2-x1;
+
+        do Screen.drawPixel(x1,y1);
+        while(~(a=dx)){
+            let a = a + 1;
+            do Screen.drawPixel(x1+a,y1);
         }
         return;
     }
@@ -176,7 +235,7 @@ class Screen {
 
         while(~(dy>r)){
             let dx = Math.sqrt(r_square - (dy*dy));
-            do Screen.drawLine(x-dx,y-dy,x+dx,y+dy);
+            do Screen.drawLine(x-dx,y+dy,x+dx,y+dy);
             let dy = dy + 1;
         }
         return;
