@@ -19,7 +19,7 @@ class Memory {
         let free_blocks = 2048;
         // size of free blocks
         // length = 0
-        let free_blocks[0] = 14335;
+        let free_blocks[0] = 16383 - 2048;
         // next = 1
         let free_blocks[1] = null;
         return;
@@ -39,38 +39,52 @@ class Memory {
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
-        var Array curr, prev, next;
-        let curr = free_blocks;
-        let prev = 0;
-        while(curr[0] < size){
-            let prev = curr;
-            let curr = curr[1];
-            if(curr = null){
-                return -1;
+        var Array curr, next_list, prev_list;
+        var int list_size, next;
+        
+        if(size < free_blocks[0]){
+            let curr = free_blocks + 1;
+            let free_blocks = free_blocks + size + 1;
+            let free_blocks[0] = curr[-1] - (size+1);
+            let curr[-1] =size + 1;
+            let free_blocks[1] = null;
+            return curr;
+        }else{
+            let next_list = free_blocks[1];
+            let prev_list = free_blocks;
+            let list_size = next_list[0];
+
+            while(~(size < list_size) & ~(next_list = null)){
+                let prev_list = next_list;
+                let next_list = next_list[1];
+                let list_size = next_list[0];
+            }
+
+            if(size < list_size){
+                let curr = next_list + 1;
+                let next = next_list[1];
+                let next_list = next_list + size + 1;
+                let next_list[0] = curr[-1] - (size+1);
+                let next_list[1] = next;
+                let curr[-1] = size + 1;
+                let prev_list[1] = next_list;
+                return curr;
+            }else{
+                return 0;
             }
         }
-        
-        let next = curr + 2 + size;
-        let next[0] = curr[0] - size - 2;
-        let next[1] = curr[1];
-        let curr[0] = size;
-        let curr[1] = null;
-
-        if(prev = 0){
-            let free_blocks = next;
-        }else{
-            let prev[1] = next;
-        }
-        return curr + 2;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
-        var Array block;
-        let block = o - 2;
-        let block[1] = free_blocks;
-        let free_blocks = block;
+        var Array list;
+        let list = free_blocks;
+        while(~(list[1] = null)){
+            let list = list[1];
+        }
+        let list[1] = o - 1;
+        let o[0] = null;
         return;
     }    
 }
